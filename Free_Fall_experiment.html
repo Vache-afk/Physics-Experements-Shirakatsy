@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free Fall Experiment</title>
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #141E30, #243B55);
+  color: white;
+  text-align: center;
+}
+
+h1 { margin-top: 20px; font-size: 38px; }
+
+/* Формулы */
+#equationDisplay {
+  margin: 20px auto;
+  width: 700px;
+  max-width: 90%;
+  background: rgba(255,255,255,0.1);
+  padding: 15px 20px;
+  border-radius: 12px;
+  font-size: 16px;
+  text-align: left;
+}
+#equationDisplay p { margin: 1px 0; }
+#equationDisplay .mjx-chtml { margin: 2px 0; }
+
+#simulation {
+  position: relative;
+  width: 800px;
+  height: 400px;
+  margin: 20px auto;
+  border-radius: 20px;
+  background: linear-gradient(to top, #f0f0f0, #c0c0c0);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+
+.ball {
+  position: absolute;
+  left: 50%;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #ff4c4c, #b20000);
+  transform: translateX(-50%);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* Arrow */
+.arrow {
+  position: absolute;
+  left: 50%;
+  width: 6px;
+  background: yellow;
+  transform: translateX(-50%);
+}
+
+.arrow::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+}
+
+.arrow.up::after { bottom: 100%; border-bottom: 14px solid yellow; }
+.arrow.down::after { top: 100%; border-top: 14px solid yellow; }
+
+#controls { margin-top: 20px; }
+
+#controls input {
+  padding: 8px 12px;
+  margin: 8px;
+  border-radius: 8px;
+  border: none;
+  width: 100px;
+  font-size: 16px;
+  text-align: center;
+}
+
+button {
+  padding: 12px 25px;
+  margin: 10px;
+  font-size: 16px;
+  border: none;
+  border-radius: 10px;
+  background: #243B55;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+button:hover { background: #141E30; }
+
+#velocityDisplay p { margin: 5px 0; }
+
+table {
+  width: 90%;
+  margin: 20px auto;
+  border-collapse: collapse;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+}
+
+table, th, td { border: 1px solid #555; }
+th, td { padding: 12px; text-align: center; }
+th { background: rgba(255,255,255,0.2); }
+tr:nth-child(even) { background: rgba(255,255,255,0.1); }
+tr:hover { background: rgba(255,255,255,0.2); }
+
+.save-button { background: #4CAF50; }
+.save-button:hover { background: #45a049; }
+
+.email-button { background: #0072ff; }
+.email-button:hover { background: #005bb5; }
+
+.back-button {
+  display: inline-block;
+  margin: 15px 10px;
+  padding: 10px 20px;
+  background: #0072ff;
+  color: white;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: 0.3s;
+}
+.back-button:hover { background: #005bb5; }
+
+.notice {
+  max-width: 900px;
+  margin: 10px auto 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.12);
+  font-size: 14px;
+  opacity: 0.95;
+}
+.notice b { color: #fff; }
+</style>
+</head>
+<body>
+
+<h1>Free Fall Experiment</h1>
+
+<div class="notice" id="authNotice">Loading user...</div>
+
+<div id="equationDisplay">
+<p>1) Position:</p>
+\[
+y = h_0 + v_0 t - \frac{1}{2} g t^2
+\]
+<p>2) Velocity:</p>
+\[
+v = v_0 - g t
+\]
+<p>3) Time to fall from height \(h_0\):</p>
+\[
+t_{fall} = \sqrt{\frac{2 h_0}{g}}
+\]
+<p>4) Maximum height if thrown up:</p>
+\[
+h_{max} = h_0 + \frac{v_0^2}{2 g}
+\]
+<p><b>Legend:</b> \(y\) = height, \(h_0\) = initial height, \(v_0\) = initial velocity, \(g\) = gravity, \(t\) = time</p>
+</div>
+
+<div id="simulation">
+  <div class="ball" id="ball"></div>
+  <div class="arrow" id="arrow"></div>
+</div>
+
+<div id="controls">
+<label for="initialHeight">Initial Height (m):</label>
+<input type="number" id="initialHeight" value="10" min="1" max="100">
+<br>
+<label for="initialVelocity">Initial Velocity (m/s):</label>
+<input type="number" id="initialVelocity" value="0" min="0">
+<br>
+<button onclick="startSimulation()">Start Experiment</button>
+</div>
+
+<div id="velocityDisplay">
+<p>Vertical Velocity: <span id="velocityText">0</span> m/s</p>
+<p>Time: <span id="timeText">0.00</span> s</p>
+</div>
+
+<h2>Experiment Results</h2>
+<table id="resultsTable">
+<thead>
+<tr>
+<th>Initial Height (m)</th>
+<th>Initial Velocity (m/s)</th>
+<th>Final Velocity (m/s)</th>
+<th>Time (s)</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<div>
+<button class="save-button" onclick="saveResultsToFile()">Save Results</button>
+<button class="email-button" onclick="sendResultsEmail()">Send to Email</button>
+</div>
+
+<div>
+<a href="mechanics.html" class="back-button">Back to Mechanics</a>
+<a href="index.html" class="back-button">Back to Main Page</a>
+</div>
+
+<!-- ✅ EmailJS (sends email FROM your connected Gmail in EmailJS) -->
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<script>
+  // Your EmailJS keys
+  const EMAILJS_PUBLIC_KEY = "OF8tw55BMFQQIG8OM";
+  const EMAILJS_SERVICE_ID = "service_xiyprvp";
+  const EMAILJS_TEMPLATE_ID = "template_rk45mwm";
+
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+</script>
+
+<!-- ✅ Firebase for this page (read the logged-in student's email) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCG_MCPpYlma9bqXkzRwt_3hsyxIL2jeUI",
+    authDomain: "physics-experiments-ib.firebaseapp.com",
+    projectId: "physics-experiments-ib",
+    storageBucket: "physics-experiments-ib.firebasestorage.app",
+    messagingSenderId: "283821061038",
+    appId: "1:283821061038:web:a8333e9406e4c3ead3ce3f"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  window.__currentUserEmail = null;
+  const authNotice = document.getElementById("authNotice");
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.__currentUserEmail = null;
+      authNotice.innerHTML = 'Status: <b>Guest</b> (login to send results).';
+      return;
+    }
+
+    try { await user.reload(); } catch {}
+
+    if (!user.emailVerified) {
+      window.__currentUserEmail = null;
+      authNotice.innerHTML = 'Status: <b>Email not confirmed</b>. Please confirm your email in <b>index.html</b>.';
+      return;
+    }
+
+    window.__currentUserEmail = user.email || null;
+    authNotice.innerHTML = `Logged in as: <b>${window.__currentUserEmail}</b>`;
+  });
+</script>
+
+<script>
+const g = 9.8;
+const ball = document.getElementById('ball');
+const arrow = document.getElementById('arrow');
+const velocityText = document.getElementById('velocityText');
+const timeText = document.getElementById('timeText');
+
+let interval;
+let time = 0;
+let initialHeight, initialVelocity;
+const scaleY = 4;
+let results = [];
+
+function startSimulation() {
+  clearInterval(interval);
+  initialHeight = parseFloat(document.getElementById('initialHeight').value);
+  initialVelocity = parseFloat(document.getElementById('initialVelocity').value);
+
+  time = 0;
+  let y = initialHeight;
+  ball.style.bottom = `${y*scaleY}px`;
+
+  interval = setInterval(() => {
+    time += 0.01;
+    let v = initialVelocity - g*time;
+    y = initialHeight + initialVelocity*time - 0.5*g*time*time;
+
+    if (y <= 0) {
+      y = 0;
+      clearInterval(interval);
+
+      results.push({
+        initialHeight,
+        initialVelocity,
+        finalVelocity: v.toFixed(2),
+        time: time.toFixed(2)
+      });
+
+      updateResultsTable();
+    }
+
+    ball.style.bottom = `${y*scaleY}px`;
+
+    const ballCenter = y * scaleY + 17.5;
+    const arrowLength = Math.min(Math.abs(v) * 4, 150);
+
+    arrow.style.height = arrowLength + "px";
+
+    if (v > 0.05) {
+      arrow.classList.remove("down");
+      arrow.classList.add("up");
+      arrow.style.bottom = ballCenter + "px";
+    } else if (v < -0.05) {
+      arrow.classList.remove("up");
+      arrow.classList.add("down");
+      arrow.style.bottom = (ballCenter - arrowLength) + "px";
+    } else {
+      arrow.style.height = "0px";
+      arrow.classList.remove("up");
+      arrow.classList.remove("down");
+    }
+
+    velocityText.textContent = v.toFixed(2);
+    timeText.textContent = time.toFixed(2);
+  }, 10);
+}
+
+function updateResultsTable() {
+  const tableBody = document.querySelector("#resultsTable tbody");
+  tableBody.innerHTML = "";
+  results.forEach(result => {
+    tableBody.innerHTML += `<tr>
+      <td>${result.initialHeight}</td>
+      <td>${result.initialVelocity}</td>
+      <td>${result.finalVelocity}</td>
+      <td>${result.time}</td>
+    </tr>`;
+  });
+}
+
+function saveResultsToFile() {
+  let raw = JSON.stringify(results, null, 2);
+  let file = new Blob([raw], { type: 'text/plain' });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(file);
+  link.download = "FreeFallResults.txt";
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+// ✅ SEND EMAIL: FROM your connected EmailJS Gmail -> TO the logged-in student's email
+function sendResultsEmail() {
+  const studentEmail = window.__currentUserEmail;
+
+  if (!studentEmail) {
+    alert("You are not logged in (or email not confirmed). Please login on the main page first.");
+    return;
+  }
+
+  if (!results.length) {
+    alert("No results yet. Run the experiment first.");
+    return;
+  }
+
+  const params = {
+    email: studentEmail,                         // To Email in template: {{email}}
+    name: studentEmail,                          // Student: {{name}}
+    results: JSON.stringify(results, null, 2)     // Results: {{results}}
+  };
+
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params)
+    .then(() => alert("✅ Results sent to your email!"))
+    .catch((err) => {
+      console.error(err);
+      alert("❌ Failed to send email. Open console for details.");
+    });
+}
+</script>
+
+</body>
+</html>

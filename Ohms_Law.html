@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ohm's Law Experiment</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax (FIX: formulas render correctly) -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <!-- ✅ EmailJS SDK (Browser) -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #8E0E00, #1F1C18);
+      color: white;
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 25px;
+      font-size: 38px;
+    }
+
+    .subtitle {
+      opacity: 0.88;
+      margin: 0 auto 18px;
+      max-width: 900px;
+      padding: 0 18px;
+      line-height: 1.5;
+    }
+
+    /* White card panels like Electricity page */
+    .panel {
+      width: 900px;
+      max-width: 92%;
+      margin: 18px auto;
+      background: white;
+      color: black;
+      border-radius: 20px;
+      padding: 18px 18px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+      text-align: left;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin: 10px 0;
+    }
+
+    .row label {
+      font-weight: 700;
+      min-width: 170px;
+    }
+
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 260px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: crimson;
+    }
+
+    .value-pill {
+      min-width: 95px;
+      text-align: center;
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.06);
+      font-weight: 800;
+    }
+
+    .result-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(0,0,0,0.06);
+    }
+
+    .result-box .big {
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .equation-inline {
+      opacity: 0.85;
+      font-weight: 600;
+    }
+
+    /* Simulation canvas styled like other sim areas */
+    #circuitCanvas {
+      display: block;
+      width: 900px;
+      max-width: 92%;
+      height: 220px;
+      margin: 18px auto;
+      border-radius: 20px;
+      background: linear-gradient(to top, #f0f0f0, #c0c0c0);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.45);
+      border: none;
+    }
+
+    /* Buttons */
+    button {
+      padding: 12px 22px;
+      margin: 8px 6px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      background: crimson;
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.25s;
+    }
+    button:hover { background: darkred; }
+
+    .secondary {
+      background: #b11212;
+    }
+    .secondary:hover { background: #7d0b0b; }
+
+    table {
+      width: 92%;
+      margin: 16px auto 26px;
+      border-collapse: collapse;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.45);
+      background: rgba(255,255,255,0.08);
+      color: white;
+    }
+    table, th, td { border: 1px solid rgba(255,255,255,0.25); }
+    th, td { padding: 12px; text-align: center; }
+    th { background: rgba(255,255,255,0.15); }
+    tr:nth-child(even) { background: rgba(255,255,255,0.06); }
+    tr:hover { background: rgba(255,255,255,0.12); }
+
+    .back-button {
+      display: inline-block;
+      margin: 12px 10px 28px;
+      padding: 12px 22px;
+      background: crimson;
+      color: white;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 800;
+      transition: 0.25s;
+    }
+    .back-button:hover { background: darkred; }
+
+    .top-actions {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .notice {
+      max-width: 900px;
+      margin: 10px auto 0;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.12);
+      font-size: 14px;
+      opacity: 0.95;
+      color: white;
+      text-align: center;
+    }
+    .notice b { color: #fff; }
+
+    @media (max-width: 520px) {
+      .row label { min-width: 100%; }
+      .value-pill { min-width: 84px; }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>🔌 Ohm's Law Experiment</h1>
+
+  <!-- ✅ статус логина как в остальных -->
+  <div class="notice" id="authNotice">Loading user...</div>
+
+  <p class="subtitle">
+    Adjust the voltage \(V\) and resistance \(R\) to calculate the current \(I\) using
+    \( I = \frac{V}{R} \).
+    The electron speed in the animation is proportional to current.
+  </p>
+
+  <div class="panel">
+    <div class="row">
+      <label for="voltage">Voltage (V):</label>
+      <div class="slider-wrap">
+        <input type="range" id="voltage" min="1" max="20" value="10" oninput="calculateCurrent()">
+        <div class="value-pill"><span id="voltageValue">10</span> V</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <label for="resistance">Resistance (Ω):</label>
+      <div class="slider-wrap">
+        <input type="range" id="resistance" min="1" max="10" value="5" oninput="calculateCurrent()">
+        <div class="value-pill"><span id="resistanceValue">5</span> Ω</div>
+      </div>
+    </div>
+
+    <div class="result-box">
+      <div class="big">Current (I): <span id="currentValue">2.00</span> A</div>
+      <div class="equation-inline">Formula: \( I = \frac{V}{R} \)</div>
+    </div>
+
+    <div class="top-actions">
+      <button onclick="recordResult()">Record Result</button>
+      <button class="secondary" onclick="saveResultsToFile()">Save Results</button>
+      <button id="sendBtn" onclick="sendResultsEmail()">Send to Email</button>
+    </div>
+  </div>
+
+  <canvas id="circuitCanvas" width="900" height="220"></canvas>
+
+  <h2>Experiment Results</h2>
+  <table id="resultsTable">
+    <thead>
+      <tr>
+        <th>Voltage (V)</th>
+        <th>Resistance (Ω)</th>
+        <th>Current (A)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div>
+    <a href="electricity.html" class="back-button">⬅ Back to Electricity Experiments</a>
+    <a href="index.html" class="back-button">⬅ Back to Main Page</a>
+  </div>
+
+  <!-- ✅ Firebase auth (same as working pages) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCG_MCPpYlma9bqXkzRwt_3hsyxIL2jeUI",
+      authDomain: "physics-experiments-ib.firebaseapp.com",
+      projectId: "physics-experiments-ib",
+      storageBucket: "physics-experiments-ib.firebasestorage.app",
+      messagingSenderId: "283821061038",
+      appId: "1:283821061038:web:a8333e9406e4c3ead3ce3f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    window.__currentUserEmail = null;
+    const authNotice = document.getElementById("authNotice");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.__currentUserEmail = null;
+        authNotice.innerHTML = 'Status: <b>Guest</b> (login to send results to your email).';
+        return;
+      }
+
+      try { await user.reload(); } catch {}
+
+      if (!user.emailVerified) {
+        window.__currentUserEmail = null;
+        authNotice.innerHTML = 'Status: <b>Email not confirmed</b>. Confirm email in <b>index.html</b> then come back.';
+        return;
+      }
+
+      window.__currentUserEmail = user.email || null;
+      authNotice.innerHTML = `Logged in as: <b>${window.__currentUserEmail}</b>`;
+    });
+  </script>
+
+  <script>
+    /* =========================
+       ✅ EmailJS CONFIG (same as working pages)
+       ========================= */
+    const EMAILJS_PUBLIC_KEY  = "OF8tw55BMFQQIG8OM";
+    const EMAILJS_SERVICE_ID  = "service_xiyprvp";
+    const EMAILJS_TEMPLATE_ID = "template_rk45mwm";
+
+    (function initEmailJS(){
+      if (!window.emailjs) {
+        console.error("EmailJS not loaded");
+        return;
+      }
+      emailjs.init(EMAILJS_PUBLIC_KEY);
+    })();
+
+    let currentValue = 0;
+    let results = [];
+
+    function calculateCurrent() {
+      const voltage = parseFloat(document.getElementById("voltage").value);
+      const resistance = parseFloat(document.getElementById("resistance").value);
+
+      document.getElementById("voltageValue").textContent = voltage;
+      document.getElementById("resistanceValue").textContent = resistance;
+
+      const current = voltage / resistance;
+      currentValue = current;
+
+      document.getElementById("currentValue").textContent = current.toFixed(2);
+    }
+
+    function recordResult() {
+      const voltage = parseFloat(document.getElementById("voltage").value);
+      const resistance = parseFloat(document.getElementById("resistance").value);
+      const current = voltage / resistance;
+
+      results.push({
+        voltage: voltage.toFixed(2),
+        resistance: resistance.toFixed(2),
+        current: current.toFixed(2)
+      });
+
+      updateResultsTable();
+    }
+
+    function updateResultsTable() {
+      const tableBody = document.querySelector("#resultsTable tbody");
+      tableBody.innerHTML = "";
+
+      results.forEach(result => {
+        tableBody.innerHTML += `
+          <tr>
+            <td>${result.voltage}</td>
+            <td>${result.resistance}</td>
+            <td>${result.current}</td>
+          </tr>`;
+      });
+    }
+
+    function saveResultsToFile() {
+      const data = JSON.stringify(results, null, 2);
+      const blob = new Blob([data], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'ohms_law_results.txt';
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    // ✅ EmailJS send (same as other working experiments)
+    function sendResultsEmail() {
+      const studentEmail = window.__currentUserEmail;
+      const sendBtn = document.getElementById("sendBtn");
+
+      if (!studentEmail) {
+        alert("You are not logged in (or email not confirmed). Please login on the main page first.");
+        return;
+      }
+      if (!results.length) {
+        alert("No results yet. Record at least one result first.");
+        return;
+      }
+      if (!window.emailjs) {
+        alert("EmailJS library not loaded. Check your internet connection.");
+        return;
+      }
+
+      const params = {
+        email: studentEmail,
+        name: studentEmail,
+        results: JSON.stringify(results, null, 2)
+      };
+
+      sendBtn.disabled = true;
+
+      emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params)
+        .then(() => alert("✅ Results sent to your email!"))
+        .catch((err) => {
+          console.error(err);
+          alert("❌ Failed to send email. Open console for details.");
+        })
+        .finally(() => {
+          sendBtn.disabled = false;
+        });
+    }
+
+    // Init values on load
+    calculateCurrent();
+
+    // --- Simulation: draw a simple circuit with a moving electron ---
+    const canvas = document.getElementById("circuitCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let electronX = 0;
+    let lastTimestamp = null;
+
+    function drawCircuit() {
+      const midY = canvas.height / 2;
+
+      // wire
+      ctx.strokeStyle = "#222";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(70, midY);
+      ctx.lineTo(canvas.width - 70, midY);
+      ctx.stroke();
+
+      // resistor
+      const resistorW = 110;
+      const resistorH = 34;
+      const rx = canvas.width / 2 - resistorW / 2;
+      const ry = midY - resistorH / 2;
+
+      ctx.fillStyle = "rgba(255,255,255,0.45)";
+      ctx.fillRect(rx, ry, resistorW, resistorH);
+
+      ctx.strokeStyle = "#111";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(rx, ry, resistorW, resistorH);
+
+      ctx.fillStyle = "#111";
+      ctx.font = "bold 14px Poppins";
+      ctx.fillText("R", rx + resistorW/2 - 5, ry - 10);
+
+      // battery on left
+      const bx = 70;
+      ctx.strokeStyle = "#111";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(bx, midY - 26);
+      ctx.lineTo(bx, midY + 26);
+      ctx.stroke();
+
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(bx + 18, midY - 16);
+      ctx.lineTo(bx + 18, midY + 16);
+      ctx.stroke();
+
+      ctx.fillStyle = "#111";
+      ctx.font = "bold 14px Poppins";
+      ctx.fillText("V", bx + 8, midY - 34);
+    }
+
+    function animate(timestamp) {
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const dt = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawCircuit();
+
+      // speed proportional to current (px/s)
+      const speed = currentValue * 90;
+      electronX += speed * dt;
+
+      const left = 70;
+      const right = canvas.width - 70;
+      const trackLen = right - left;
+
+      if (electronX > trackLen) electronX = 0;
+
+      const x = left + electronX;
+      const y = canvas.height / 2;
+
+      // electron glow
+      ctx.fillStyle = "rgba(0,0,255,0.25)";
+      ctx.beginPath();
+      ctx.arc(x, y, 10, 0, 2 * Math.PI);
+      ctx.fill();
+
+      ctx.fillStyle = "#1e4bff";
+      ctx.beginPath();
+      ctx.arc(x, y, 6, 0, 2 * Math.PI);
+      ctx.fill();
+
+      requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

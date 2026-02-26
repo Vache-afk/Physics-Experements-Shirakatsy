@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Throwing Ball from Cliff</title>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+  <!-- ✅ EmailJS SDK (Browser) -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #141E30, #243B55);
+      color: white;
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 20px;
+      font-size: 38px;
+    }
+
+    /* Формулы как в прошлых */
+    #equationDisplay {
+      margin: 20px auto;
+      width: 700px;
+      max-width: 90%;
+      background: rgba(255,255,255,0.1);
+      padding: 15px 20px;
+      border-radius: 12px;
+      font-size: 16px;
+      text-align: left;
+    }
+    #equationDisplay p { margin: 6px 0; }
+    #equationDisplay .mjx-chtml { margin: 2px 0; }
+
+    #simulation {
+      position: relative;
+      width: 900px;
+      height: 500px;
+      margin: 20px auto;
+      border-radius: 20px;
+      background: linear-gradient(to top, #f0f0f0, #c0c0c0);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+      overflow: hidden;
+    }
+
+    #cliff {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 10px;
+      height: 100%;
+      background: linear-gradient(to top, #5a2d0c, #8b4513);
+      box-shadow: 3px 0 10px rgba(0,0,0,0.3);
+    }
+
+    .ball {
+      position: absolute;
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ff4c4c, #b20000);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    /* ===== Стрелки такие же как в Projectile Motion ===== */
+    .arrow {
+      position: absolute;
+      background: yellow;
+      border-radius: 3px;
+    }
+    .arrow::after {
+      content: '';
+      position: absolute;
+      border: 6px solid transparent;
+    }
+
+    .arrow-h::after { top: 50%; transform: translateY(-50%); }
+    .arrow-h.right::after { left: 100%; border-left-color: yellow; }
+    .arrow-h.left::after { right: 100%; border-right-color: yellow; }
+
+    .arrow-v::after { left: 50%; transform: translateX(-50%); }
+    .arrow-v.up::after { bottom: 100%; border-bottom-color: yellow; }
+    .arrow-v.down::after { top: 100%; border-top-color: yellow; }
+
+    .arrow-label {
+      position: absolute;
+      font-size: 14px;
+      font-weight: bold;
+      color: yellow;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+      pointer-events: none;
+    }
+    /* ================================================ */
+
+    #controls {
+      margin-top: 20px;
+    }
+
+    #controls input, #controls select {
+      padding: 8px 12px;
+      margin: 8px;
+      border-radius: 8px;
+      border: none;
+      width: 140px;
+      font-size: 16px;
+      text-align: center;
+    }
+
+    button {
+      padding: 12px 25px;
+      margin: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      background: #243B55;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover { background: #141E30; }
+
+    #velocityDisplay p { margin: 5px 0; }
+
+    table {
+      width: 90%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+    }
+    table, th, td { border: 1px solid #555; }
+    th, td { padding: 12px; text-align: center; }
+    th { background: rgba(255,255,255,0.2); }
+    tr:nth-child(even) { background: rgba(255,255,255,0.1); }
+    tr:hover { background: rgba(255,255,255,0.2); }
+
+    .save-button { background: #4CAF50; }
+    .save-button:hover { background: #45a049; }
+
+    .email-button { background: #0072ff; }
+    .email-button:hover { background: #005bb5; }
+
+    .back-button {
+      display: inline-block;
+      margin: 15px 10px;
+      padding: 10px 20px;
+      background: #0072ff;
+      color: white;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    .back-button:hover { background: #005bb5; }
+
+    .notice {
+      max-width: 900px;
+      margin: 10px auto 0;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.12);
+      font-size: 14px;
+      opacity: 0.95;
+    }
+    .notice b { color: #fff; }
+  </style>
+</head>
+
+<body>
+  <h1>Throwing Ball from Cliff Experiment</h1>
+
+  <!-- ✅ статус как в других -->
+  <div class="notice" id="authNotice">Loading user...</div>
+
+  <div id="equationDisplay">
+    <p>Horizontal position:</p>
+    \[
+      x = v_{x0}\,t
+    \]
+    <p>Vertical position:</p>
+    \[
+      y = h_0 + v_{y0}\,t - \frac{1}{2} g t^2
+    \]
+    <p><b>Legend:</b> \(x,y\) positions, \(v_{x0}, v_{y0}\) initial velocities, \(h_0\) cliff height, \(g=9.81\,\mathrm{m/s^2}\), \(t\) time.</p>
+  </div>
+
+  <div id="simulation">
+    <div id="cliff"></div>
+    <div class="ball" id="ball"></div>
+
+    <div id="vxArrow" class="arrow arrow-h"></div>
+    <div id="vyArrow" class="arrow arrow-v"></div>
+    <div id="vxLabel" class="arrow-label"></div>
+    <div id="vyLabel" class="arrow-label"></div>
+  </div>
+
+  <div id="controls">
+    <label for="cliffHeight">Cliff Height (m, max 200):</label>
+    <input type="number" id="cliffHeight" value="200" min="1" max="200">
+    <br>
+
+    <label for="angle">Launch Angle (degrees):</label>
+    <select id="angle">
+      <option value="15">15°</option>
+      <option value="30">30°</option>
+      <option value="45" selected>45°</option>
+      <option value="60">60°</option>
+      <option value="75">75°</option>
+    </select>
+    <br>
+
+    <label for="velocity">Initial Velocity (m/s):</label>
+    <input type="number" id="velocity" value="20" min="1">
+    <br>
+
+    <button onclick="startSimulation()">Start Experiment</button>
+  </div>
+
+  <div id="velocityDisplay">
+    <p>Velocity (Vx, Vy): <span id="velocityText">0, 0</span> m/s</p>
+    <p>Time: <span id="timeText">0.00</span> s</p>
+  </div>
+
+  <h2>Simulation Results</h2>
+  <table id="resultsTable">
+    <thead>
+      <tr>
+        <th>Cliff Height (m)</th>
+        <th>Angle (°)</th>
+        <th>Initial Velocity (m/s)</th>
+        <th>Horizontal Range (m)</th>
+        <th>Max Height (m)</th>
+        <th>Flight Time (s)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- ✅ КНОПКИ как в остальных -->
+  <div>
+    <button class="save-button" onclick="saveResultsToFile()">Save Results</button>
+    <button class="email-button" id="sendBtn" onclick="sendResultsEmail()">Send to Email</button>
+  </div>
+
+  <div>
+    <a href="mechanics.html" class="back-button">Back to Mechanics</a>
+    <a href="index.html" class="back-button">Back to Main Page</a>
+  </div>
+
+  <!-- ✅ Firebase auth (same as working pages) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCG_MCPpYlma9bqXkzRwt_3hsyxIL2jeUI",
+      authDomain: "physics-experiments-ib.firebaseapp.com",
+      projectId: "physics-experiments-ib",
+      storageBucket: "physics-experiments-ib.firebasestorage.app",
+      messagingSenderId: "283821061038",
+      appId: "1:283821061038:web:a8333e9406e4c3ead3ce3f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    window.__currentUserEmail = null;
+    const authNotice = document.getElementById("authNotice");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.__currentUserEmail = null;
+        authNotice.innerHTML = 'Status: <b>Guest</b> (login to send results to your email).';
+        return;
+      }
+
+      try { await user.reload(); } catch {}
+
+      if (!user.emailVerified) {
+        window.__currentUserEmail = null;
+        authNotice.innerHTML = 'Status: <b>Email not confirmed</b>. Confirm email in <b>index.html</b> then come back.';
+        return;
+      }
+
+      window.__currentUserEmail = user.email || null;
+      authNotice.innerHTML = `Logged in as: <b>${window.__currentUserEmail}</b>`;
+    });
+  </script>
+
+  <script>
+    /* =========================
+       ✅ EmailJS CONFIG (same as working pages)
+       ========================= */
+    const EMAILJS_PUBLIC_KEY  = "OF8tw55BMFQQIG8OM";
+    const EMAILJS_SERVICE_ID  = "service_xiyprvp";
+    const EMAILJS_TEMPLATE_ID = "template_rk45mwm";
+
+    (function initEmailJS(){
+      if (!window.emailjs) {
+        console.error("EmailJS not loaded");
+        return;
+      }
+      emailjs.init(EMAILJS_PUBLIC_KEY);
+    })();
+
+    const g = 9.81;
+    const simulationArea = document.getElementById('simulation');
+    const ball = document.getElementById('ball');
+
+    const vxArrow = document.getElementById('vxArrow');
+    const vyArrow = document.getElementById('vyArrow');
+    const vxLabel = document.getElementById('vxLabel');
+    const vyLabel = document.getElementById('vyLabel');
+
+    const velocityText = document.getElementById('velocityText');
+    const timeText = document.getElementById('timeText');
+
+    // Скейлы под 900x500
+    const scaleX = 2.5;   // px per meter (range будет больше виден)
+    const scaleY = 2.0;   // px per meter
+    const MAX_CLIFF_HEIGHT = 200;
+
+    let interval, time;
+    let results = [];
+
+    function startSimulation() {
+      clearInterval(interval);
+
+      let cliffHeight = Math.min(
+        Math.max(1, parseFloat(document.getElementById('cliffHeight').value)),
+        MAX_CLIFF_HEIGHT
+      );
+      document.getElementById('cliffHeight').value = cliffHeight;
+
+      const angle = parseFloat(document.getElementById('angle').value);
+      const initialVelocity = parseFloat(document.getElementById('velocity').value);
+
+      const rad = angle * Math.PI / 180;
+      const vx = initialVelocity * Math.cos(rad);
+      const vy0 = initialVelocity * Math.sin(rad);
+
+      time = 0;
+      let x = 0;
+      let y = cliffHeight;
+      let maxHeight = cliffHeight;
+
+      ball.style.left = '0px';
+      ball.style.bottom = (y * scaleY) + 'px';
+
+      interval = setInterval(() => {
+        time += 0.02;
+
+        const vy = vy0 - g * time;
+        x = vx * time;
+        y = cliffHeight + vy0 * time - 0.5 * g * time * time;
+
+        if (y > maxHeight) maxHeight = y;
+
+        if (y <= 0) {
+          y = 0;
+          clearInterval(interval);
+
+          results.push({
+            cliffHeight: cliffHeight.toFixed(2),
+            angle: angle,
+            initialVelocity: initialVelocity,
+            horizontalRange: x.toFixed(2),
+            maxHeight: maxHeight.toFixed(2),
+            flightTime: time.toFixed(2)
+          });
+          updateResultsTable();
+        }
+
+        const px = x * scaleX;
+        const py = y * scaleY;
+
+        ball.style.left = px + 'px';
+        ball.style.bottom = py + 'px';
+
+        // скорость текст
+        velocityText.textContent = vx.toFixed(2) + ", " + (vy).toFixed(2);
+        timeText.textContent = time.toFixed(2);
+
+        // центр шара
+        const centerX = px + 17.5;
+        const centerY = py + 17.5;
+
+        // ===== стрелки как в Projectile Motion =====
+        const vxLength = Math.min(Math.abs(vx) * 3, 150);
+        vxArrow.style.width = vxLength + "px";
+        vxArrow.style.height = "6px";
+        vxArrow.style.left = (vx >= 0 ? centerX : (centerX - vxLength)) + "px";
+        vxArrow.style.bottom = centerY + "px";
+        vxArrow.classList.remove("right", "left");
+        vxArrow.classList.add(vx >= 0 ? "right" : "left");
+
+        const vyLength = Math.min(Math.abs(vy) * 3, 150);
+        vyArrow.style.width = "6px";
+        vyArrow.style.height = vyLength + "px";
+        vyArrow.style.left = centerX + "px";
+        if (vy > 0.05) {
+          vyArrow.classList.remove("down");
+          vyArrow.classList.add("up");
+          vyArrow.style.bottom = centerY + "px";
+        } else if (vy < -0.05) {
+          vyArrow.classList.remove("up");
+          vyArrow.classList.add("down");
+          vyArrow.style.bottom = (centerY - vyLength) + "px";
+        } else {
+          vyArrow.style.height = "0px";
+          vyArrow.classList.remove("up", "down");
+        }
+
+        vxLabel.textContent = "Vx: " + vx.toFixed(1);
+        vxLabel.style.left = (vx >= 0 ? (centerX + vxLength + 8) : (centerX - vxLength - 55)) + "px";
+        vxLabel.style.bottom = (centerY + 8) + "px";
+
+        vyLabel.textContent = "Vy: " + vy.toFixed(1);
+        vyLabel.style.left = (centerX + 10) + "px";
+        if (vy > 0.05) {
+          vyLabel.style.bottom = (centerY + vyLength + 8) + "px";
+        } else if (vy < -0.05) {
+          vyLabel.style.bottom = (centerY - vyLength - 22) + "px";
+        } else {
+          vyLabel.style.bottom = (centerY + 8) + "px";
+        }
+      }, 20);
+    }
+
+    function updateResultsTable() {
+      const tableBody = document.querySelector("#resultsTable tbody");
+      tableBody.innerHTML = "";
+      results.forEach(r => {
+        tableBody.innerHTML += `
+          <tr>
+            <td>${r.cliffHeight}</td>
+            <td>${r.angle}</td>
+            <td>${r.initialVelocity}</td>
+            <td>${r.horizontalRange}</td>
+            <td>${r.maxHeight}</td>
+            <td>${r.flightTime}</td>
+          </tr>`;
+      });
+    }
+
+    function saveResultsToFile() {
+      const data = JSON.stringify(results, null, 2);
+      const blob = new Blob([data], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'cliff_experiment_results.txt';
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    // ✅ EmailJS send (same pattern as your working Free Fall / Projectile)
+    function sendResultsEmail() {
+      const studentEmail = window.__currentUserEmail;
+      const sendBtn = document.getElementById("sendBtn");
+
+      if (!studentEmail) {
+        alert("You are not logged in (or email not confirmed). Please login on the main page first.");
+        return;
+      }
+      if (!results.length) {
+        alert("No results yet. Run the experiment first.");
+        return;
+      }
+      if (!window.emailjs) {
+        alert("EmailJS library not loaded. Check your internet connection.");
+        return;
+      }
+
+      const params = {
+        email: studentEmail,
+        name: studentEmail,
+        results: JSON.stringify(results, null, 2)
+      };
+
+      sendBtn.disabled = true;
+
+      emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params)
+        .then(() => alert("✅ Results sent to your email!"))
+        .catch((err) => {
+          console.error(err);
+          alert("❌ Failed to send email. Open console for details.");
+        })
+        .finally(() => {
+          sendBtn.disabled = false;
+        });
+    }
+
+    document.getElementById('cliffHeight').addEventListener('change', function() {
+      let value = parseFloat(this.value);
+      if (value > MAX_CLIFF_HEIGHT) this.value = MAX_CLIFF_HEIGHT;
+      if (value < 1) this.value = 1;
+    });
+  </script>
+</body>
+</html>

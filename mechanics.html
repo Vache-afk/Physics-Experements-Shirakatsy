@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mechanics Experiments</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #141E30, #243B55);
+  color: white;
+  text-align: center;
+}
+
+h1 {
+  margin-top: 40px;
+  font-size: 40px;
+}
+
+.subtitle {
+  opacity: 0.8;
+  margin-bottom: 40px;
+}
+
+.cards {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+  padding: 20px;
+}
+
+.card {
+  background: white;
+  color: black;
+  width: 260px;
+  padding: 25px;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-12px);
+}
+
+.icon {
+  font-size: 50px;
+  margin-bottom: 10px;
+}
+
+.back-button {
+  margin-top: 50px;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 10px;
+  background: crimson;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.back-button:hover {
+  background: darkred;
+}
+</style>
+</head>
+
+<body>
+
+<h1>⚙️ Mechanics Experiments</h1>
+<p class="subtitle">Interactive IB Physics Mechanics Simulations</p>
+
+<div class="cards">
+
+  <div class="card" onclick="location.href='Free_Fall_experiment.html'">
+    <div class="icon">🪂</div>
+    <h3>Free Fall</h3>
+    <p>Gravity & Acceleration</p>
+  </div>
+
+  <div class="card" onclick="location.href='Projectile_motion.html'">
+    <div class="icon">🏹</div>
+    <h3>Projectile Motion</h3>
+    <p>2D Motion & Trajectory</p>
+  </div>
+
+  <div class="card" onclick="location.href='From_Cliff.html'">
+    <div class="icon">⛰️</div>
+    <h3>Throw from Cliff</h3>
+    <p>Horizontal Launch</p>
+  </div>
+
+  <div class="card" onclick="location.href='Collisions.html'">
+    <div class="icon">💥</div>
+    <h3>Collisions</h3>
+    <p>Momentum & Energy</p>
+  </div>
+
+</div>
+
+<button class="back-button" onclick="location.href='index.html'">
+⬅ Back to Main Page
+</button>
+
+</body>
+</html>

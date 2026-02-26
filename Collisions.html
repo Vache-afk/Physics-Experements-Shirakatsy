@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Collisions Simulation (Elastic & Inelastic)</title>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+  <!-- ✅ EmailJS SDK (Browser) -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #141E30, #243B55);
+      color: white;
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 20px;
+      font-size: 38px;
+    }
+
+    /* Формулы как в остальных */
+    #equationDisplay {
+      margin: 20px auto;
+      width: 800px;
+      max-width: 92%;
+      background: rgba(255,255,255,0.1);
+      padding: 15px 20px;
+      border-radius: 12px;
+      font-size: 16px;
+      text-align: left;
+    }
+    #equationDisplay p { margin: 6px 0; }
+    #equationDisplay .mjx-chtml { margin: 2px 0; }
+
+    /* Панель управления как в остальных */
+    #controls {
+      margin: 20px auto;
+      width: 800px;
+      max-width: 92%;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 15px;
+      padding: 15px 10px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.25);
+    }
+
+    #controls > div {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin: 10px 0;
+      flex-wrap: wrap;
+    }
+
+    label {
+      display: inline-block;
+      width: 260px;
+      text-align: right;
+      font-weight: 500;
+    }
+
+    input, select {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: none;
+      width: 140px;
+      font-size: 16px;
+      text-align: center;
+      outline: none;
+    }
+
+    button {
+      padding: 12px 25px;
+      margin: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      background: #243B55;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover { background: #141E30; }
+
+    /* ✅ Start немного темнее */
+    .start-button { background: #1b2d42; }
+    .start-button:hover { background: #121f2e; }
+
+    /* Output box */
+    #output {
+      margin: 10px auto 0;
+      width: 800px;
+      max-width: 92%;
+      background: rgba(255,255,255,0.08);
+      padding: 12px 15px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.25);
+    }
+    #output p { margin: 6px 0; }
+
+    /* Canvas look like simulation panel */
+    canvas {
+      display: block;
+      margin: 20px auto;
+      width: 900px;
+      max-width: 92%;
+      height: 300px;
+      border-radius: 20px;
+      background: linear-gradient(to top, #f0f0f0, #c0c0c0);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+      border: none;
+    }
+
+    h2 { margin-top: 10px; }
+
+    table {
+      width: 92%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+    }
+    table, th, td { border: 1px solid #555; }
+    th, td { padding: 12px; text-align: center; }
+    th { background: rgba(255,255,255,0.2); }
+    tr:nth-child(even) { background: rgba(255,255,255,0.1); }
+    tr:hover { background: rgba(255,255,255,0.2); }
+
+    .save-button { background: #4CAF50; }
+    .save-button:hover { background: #45a049; }
+
+    .email-button { background: #0072ff; }
+    .email-button:hover { background: #005bb5; }
+
+    .back-button {
+      display: inline-block;
+      margin: 15px 10px;
+      padding: 10px 20px;
+      background: #0072ff;
+      color: white;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    .back-button:hover { background: #005bb5; }
+
+    /* ===== стрелки как в прошлых (HTML overlay) ===== */
+    #canvasWrap{
+      position: relative;
+      width: 900px;
+      max-width: 92%;
+      margin: 20px auto;
+    }
+    #simCanvas{
+      width: 100%;
+      height: 300px;
+      display:block;
+    }
+
+    .arrow {
+      position: absolute;
+      background: yellow;
+      border-radius: 3px;
+      pointer-events: none;
+    }
+    .arrow::after {
+      content: '';
+      position: absolute;
+      border: 6px solid transparent;
+    }
+
+    .arrow-h::after { top: 50%; transform: translateY(-50%); }
+    .arrow-h.right::after { left: 100%; border-left-color: yellow; }
+    .arrow-h.left::after { right: 100%; border-right-color: yellow; }
+
+    .arrow-label {
+      position: absolute;
+      font-size: 14px;
+      font-weight: bold;
+      color: yellow;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+      pointer-events: none;
+    }
+
+    .notice {
+      max-width: 900px;
+      margin: 10px auto 0;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.12);
+      font-size: 14px;
+      opacity: 0.95;
+    }
+    .notice b { color: #fff; }
+  </style>
+</head>
+
+<body>
+  <h1>Collisions Simulation (Elastic & Inelastic)</h1>
+
+  <!-- ✅ статус как в других -->
+  <div class="notice" id="authNotice">Loading user...</div>
+
+  <div id="equationDisplay">
+    <p>The simulation uses the following equations:</p>
+    <p><strong>Conservation of Momentum:</strong></p>
+    \[
+      m_1 v_{1i} + m_2 v_{2i} = m_1 v_{1f} + m_2 v_{2f}
+    \]
+    <p><strong>Elastic Collision:</strong></p>
+    \[
+      v_{1f} = \frac{m_1 - m_2}{m_1 + m_2} v_{1i} + \frac{2 m_2}{m_1 + m_2} v_{2i}
+    \]
+    \[
+      v_{2f} = \frac{2 m_1}{m_1 + m_2} v_{1i} + \frac{m_2 - m_1}{m_1 + m_2} v_{2i}
+    \]
+    <p><strong>Inelastic Collision (Perfectly Inelastic):</strong></p>
+    \[
+      v_{1f} = v_{2f} = \frac{m_1 v_{1i} + m_2 v_{2i}}{m_1 + m_2}
+    \]
+    <p>Where \( m_1, m_2 \) are masses, \( v_{1i}, v_{2i} \) are initial velocities, and \( v_{1f}, v_{2f} \) are final velocities.</p>
+  </div>
+
+  <div id="controls">
+    <div>
+      <label for="mass1">Mass 1 (kg):</label>
+      <input type="number" id="mass1" step="0.1" value="2">
+    </div>
+    <div>
+      <label for="velocity1">Initial Velocity 1 (m/s):</label>
+      <input type="number" id="velocity1" step="0.1" value="5">
+    </div>
+    <div>
+      <label for="mass2">Mass 2 (kg):</label>
+      <input type="number" id="mass2" step="0.1" value="3">
+    </div>
+    <div>
+      <label for="velocity2">Initial Velocity 2 (m/s):</label>
+      <input type="number" id="velocity2" step="0.1" value="-3">
+    </div>
+    <div>
+      <label for="collisionType">Collision Type:</label>
+      <select id="collisionType">
+        <option value="elastic">Elastic</option>
+        <option value="inelastic">Inelastic</option>
+      </select>
+    </div>
+    <div>
+      <button class="start-button" onclick="startSimulation()">Start Simulation</button>
+    </div>
+  </div>
+
+  <div id="output">
+    <p id="momentumOutput">Total Momentum: </p>
+    <p id="energyOutput">Total Kinetic Energy: </p>
+  </div>
+
+  <div id="canvasWrap">
+    <canvas id="simCanvas" width="900" height="300"></canvas>
+
+    <div id="v1Arrow" class="arrow arrow-h"></div>
+    <div id="v2Arrow" class="arrow arrow-h"></div>
+    <div id="v1Label" class="arrow-label"></div>
+    <div id="v2Label" class="arrow-label"></div>
+  </div>
+
+  <h2>Simulation Results</h2>
+  <table id="resultsTable">
+    <thead>
+      <tr>
+        <th>Mass 1 (kg)</th>
+        <th>Initial Velocity 1 (m/s)</th>
+        <th>Mass 2 (kg)</th>
+        <th>Initial Velocity 2 (m/s)</th>
+        <th>Collision Type</th>
+        <th>Final Velocity 1 (m/s)</th>
+        <th>Final Velocity 2 (m/s)</th>
+        <th>Total Momentum (kg·m/s)</th>
+        <th>Total Kinetic Energy (J)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div>
+    <button class="save-button" onclick="saveResultsToFile()">Save Results</button>
+    <button class="email-button" id="sendBtn" onclick="sendResultsEmail()">Send to Email</button>
+  </div>
+
+  <div class="back-buttons-container">
+    <a href="mechanics.html" class="back-button">Back to Mechanics</a>
+    <a href="index.html" class="back-button">Back to Main Page</a>
+  </div>
+
+  <!-- ✅ Firebase auth (same as working pages) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCG_MCPpYlma9bqXkzRwt_3hsyxIL2jeUI",
+      authDomain: "physics-experiments-ib.firebaseapp.com",
+      projectId: "physics-experiments-ib",
+      storageBucket: "physics-experiments-ib.firebasestorage.app",
+      messagingSenderId: "283821061038",
+      appId: "1:283821061038:web:a8333e9406e4c3ead3ce3f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    window.__currentUserEmail = null;
+    const authNotice = document.getElementById("authNotice");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.__currentUserEmail = null;
+        authNotice.innerHTML = 'Status: <b>Guest</b> (login to send results to your email).';
+        return;
+      }
+
+      try { await user.reload(); } catch {}
+
+      if (!user.emailVerified) {
+        window.__currentUserEmail = null;
+        authNotice.innerHTML = 'Status: <b>Email not confirmed</b>. Confirm email in <b>index.html</b> then come back.';
+        return;
+      }
+
+      window.__currentUserEmail = user.email || null;
+      authNotice.innerHTML = `Logged in as: <b>${window.__currentUserEmail}</b>`;
+    });
+  </script>
+
+  <script>
+    /* =========================
+       ✅ EmailJS CONFIG (same as working pages)
+       ========================= */
+    const EMAILJS_PUBLIC_KEY  = "OF8tw55BMFQQIG8OM";
+    const EMAILJS_SERVICE_ID  = "service_xiyprvp";
+    const EMAILJS_TEMPLATE_ID = "template_rk45mwm";
+
+    (function initEmailJS(){
+      if (!window.emailjs) {
+        console.error("EmailJS not loaded");
+        return;
+      }
+      emailjs.init(EMAILJS_PUBLIC_KEY);
+    })();
+
+    const canvas = document.getElementById("simCanvas");
+    const ctx = canvas.getContext("2d");
+    const width = canvas.width;
+    const height = canvas.height;
+
+    const mass1Input = document.getElementById("mass1");
+    const velocity1Input = document.getElementById("velocity1");
+    const mass2Input = document.getElementById("mass2");
+    const velocity2Input = document.getElementById("velocity2");
+    const collisionTypeSelect = document.getElementById("collisionType");
+    const momentumOutput = document.getElementById("momentumOutput");
+    const energyOutput = document.getElementById("energyOutput");
+
+    const v1Arrow = document.getElementById("v1Arrow");
+    const v2Arrow = document.getElementById("v2Arrow");
+    const v1Label = document.getElementById("v1Label");
+    const v2Label = document.getElementById("v2Label");
+
+    let m1, m2, v1, v2;
+    let collisionType;
+
+    let ball1 = { x: 120, y: height/2, r: 20, color: "red" };
+    let ball2 = { x: width - 120, y: height/2, r: 20, color: "green" };
+
+    const dt = 0.02;
+    let simulationRunning = false;
+    let simulationInterval;
+
+    let results = [];
+
+    const arrowScale = 18;
+    const arrowMax = 160;
+
+    // ✅ FIX: чтобы результат не сохранялся бесконечно
+    let collisionHappened = false;
+
+    function startSimulation() {
+      if (simulationInterval) clearInterval(simulationInterval);
+
+      m1 = parseFloat(mass1Input.value);
+      m2 = parseFloat(mass2Input.value);
+      v1 = parseFloat(velocity1Input.value);
+      v2 = parseFloat(velocity2Input.value);
+      collisionType = collisionTypeSelect.value;
+
+      ball1.x = 120;
+      ball2.x = width - 120;
+
+      collisionHappened = false;
+
+      simulationRunning = true;
+      simulationInterval = setInterval(simulateStep, dt * 1000);
+    }
+
+    function simulateStep() {
+      if (!simulationRunning) return;
+
+      ball1.x += v1 * dt * 60;
+      ball2.x += v2 * dt * 60;
+
+      // ✅ LIMIT: не даём мячам выходить за границы canvas
+      if (ball1.x - ball1.r < 0) { ball1.x = ball1.r; v1 = 0; }
+      if (ball1.x + ball1.r > width) { ball1.x = width - ball1.r; v1 = 0; }
+      if (ball2.x - ball2.r < 0) { ball2.x = ball2.r; v2 = 0; }
+      if (ball2.x + ball2.r > width) { ball2.x = width - ball2.r; v2 = 0; }
+
+      // ✅ FIX: collision only once
+      if (!collisionHappened && ball1.x + ball1.r >= ball2.x - ball2.r) {
+        collisionHappened = true;
+
+        let overlap = (ball1.x + ball1.r) - (ball2.x - ball2.r);
+        ball1.x -= overlap / 2;
+        ball2.x += overlap / 2;
+
+        let v1_initial = v1;
+        let v2_initial = v2;
+
+        if (collisionType === "elastic") {
+          let v1_new = ((m1 - m2) / (m1 + m2)) * v1 + (2 * m2 / (m1 + m2)) * v2;
+          let v2_new = (2 * m1 / (m1 + m2)) * v1 + ((m2 - m1) / (m1 + m2)) * v2;
+          v1 = v1_new;
+          v2 = v2_new;
+        } else {
+          let v_final = (m1 * v1 + m2 * v2) / (m1 + m2);
+          v1 = v_final;
+          v2 = v_final;
+        }
+
+        // раздвинем, чтобы не было вечного пересечения
+        ball1.x = ball2.x - ball1.r - ball2.r - 0.5;
+
+        let totalMomentum = m1 * v1 + m2 * v2;
+        let totalKE = 0.5 * m1 * v1 * v1 + 0.5 * m2 * v2 * v2;
+
+        results.push({
+          mass1: m1,
+          initialVelocity1: v1_initial,
+          mass2: m2,
+          initialVelocity2: v2_initial,
+          collisionType: collisionType,
+          finalVelocity1: v1.toFixed(2),
+          finalVelocity2: v2.toFixed(2),
+          totalMomentum: totalMomentum.toFixed(2),
+          totalKineticEnergy: totalKE.toFixed(2)
+        });
+
+        updateResultsTable();
+      }
+
+      let totalMomentum = m1 * v1 + m2 * v2;
+      let totalKE = 0.5 * m1 * v1 * v1 + 0.5 * m2 * v2 * v2;
+      momentumOutput.innerHTML = "Total Momentum: " + totalMomentum.toFixed(2) + " kg·m/s";
+      energyOutput.innerHTML = "Total Kinetic Energy: " + totalKE.toFixed(2) + " J";
+
+      drawSimulation();
+      drawArrows();
+
+      if (Math.abs(v1) < 0.01 && Math.abs(v2) < 0.01) {
+        clearInterval(simulationInterval);
+        simulationRunning = false;
+      }
+    }
+
+    function drawSimulation() {
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.fillStyle = "rgba(0,0,0,0.10)";
+      ctx.fillRect(0, height/2 + 25, width, 6);
+
+      ctx.fillStyle = ball1.color;
+      ctx.beginPath();
+      ctx.arc(ball1.x, ball1.y, ball1.r, 0, 2 * Math.PI);
+      ctx.fill();
+
+      ctx.fillStyle = ball2.color;
+      ctx.beginPath();
+      ctx.arc(ball2.x, ball2.y, ball2.r, 0, 2 * Math.PI);
+      ctx.arc(ball2.x, ball2.y, ball2.r, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+
+    function drawArrows() {
+      const rect = canvas.getBoundingClientRect();
+      const scale = rect.width / width;
+
+      const c1x = ball1.x * scale;
+      const c2x = ball2.x * scale;
+      const cy  = (height/2) * (rect.height / height);
+
+      const len1 = Math.min(Math.abs(v1) * arrowScale, arrowMax);
+      v1Arrow.style.width = len1 + "px";
+      v1Arrow.style.height = "6px";
+      v1Arrow.style.top = (cy - 40) + "px";
+      v1Arrow.style.left = (v1 >= 0 ? (c1x) : (c1x - len1)) + "px";
+      v1Arrow.classList.remove("right","left");
+      v1Arrow.classList.add(v1 >= 0 ? "right" : "left");
+
+      v1Label.textContent = "v1: " + v1.toFixed(1);
+      v1Label.style.top = (cy - 62) + "px";
+      v1Label.style.left = (v1 >= 0 ? (c1x + len1 + 8) : (c1x - len1 - 55)) + "px";
+
+      const len2 = Math.min(Math.abs(v2) * arrowScale, arrowMax);
+      v2Arrow.style.width = len2 + "px";
+      v2Arrow.style.height = "6px";
+      v2Arrow.style.top = (cy + 30) + "px";
+      v2Arrow.style.left = (v2 >= 0 ? (c2x) : (c2x - len2)) + "px";
+      v2Arrow.classList.remove("right","left");
+      v2Arrow.classList.add(v2 >= 0 ? "right" : "left");
+
+      v2Label.textContent = "v2: " + v2.toFixed(1);
+      v2Label.style.top = (cy + 8) + "px";
+      v2Label.style.left = (v2 >= 0 ? (c2x + len2 + 8) : (c2x - len2 - 55)) + "px";
+
+      if (Math.abs(v1) < 0.05) { v1Arrow.style.width = "0px"; }
+      if (Math.abs(v2) < 0.05) { v2Arrow.style.width = "0px"; }
+    }
+
+    function updateResultsTable() {
+      const tableBody = document.querySelector("#resultsTable tbody");
+      tableBody.innerHTML = "";
+
+      results.forEach((result) => {
+        let row = "<tr>" +
+          "<td>" + result.mass1 + "</td>" +
+          "<td>" + result.initialVelocity1 + "</td>" +
+          "<td>" + result.mass2 + "</td>" +
+          "<td>" + result.initialVelocity2 + "</td>" +
+          "<td>" + result.collisionType + "</td>" +
+          "<td>" + result.finalVelocity1 + "</td>" +
+          "<td>" + result.finalVelocity2 + "</td>" +
+          "<td>" + result.totalMomentum + "</td>" +
+          "<td>" + result.totalKineticEnergy + "</td>" +
+          "</tr>";
+        tableBody.innerHTML += row;
+      });
+    }
+
+    function saveResultsToFile() {
+      const raw = JSON.stringify(results, null, 2);
+      const file = new Blob([raw], { type: 'text/plain' });
+
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(file);
+      link.download = "collisions_results.txt";
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    // ✅ EmailJS send (same as working experiments)
+    function sendResultsEmail() {
+      const studentEmail = window.__currentUserEmail;
+      const sendBtn = document.getElementById("sendBtn");
+
+      if (!studentEmail) {
+        alert("You are not logged in (or email not confirmed). Please login on the main page first.");
+        return;
+      }
+      if (!results.length) {
+        alert("No results yet. Run the experiment first.");
+        return;
+      }
+      if (!window.emailjs) {
+        alert("EmailJS library not loaded. Check your internet connection.");
+        return;
+      }
+
+      const params = {
+        email: studentEmail,
+        name: studentEmail,
+        results: JSON.stringify(results, null, 2)
+      };
+
+      sendBtn.disabled = true;
+
+      emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params)
+        .then(() => alert("✅ Results sent to your email!"))
+        .catch((err) => {
+          console.error(err);
+          alert("❌ Failed to send email. Open console for details.");
+        })
+        .finally(() => {
+          sendBtn.disabled = false;
+        });
+    }
+
+    window.addEventListener("resize", () => {
+      if (simulationRunning) drawArrows();
+    });
+
+    drawSimulation();
+    drawArrows();
+  </script>
+</body>
+</html>

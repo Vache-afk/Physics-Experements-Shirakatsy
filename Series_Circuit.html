@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Series Circuit (Drag & Add Resistors)</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<!-- ✅ EmailJS SDK (Browser) -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<style>
+  body{
+    margin:0;
+    font-family:'Poppins',sans-serif;
+    background:linear-gradient(135deg,#8E0E00,#1F1C18);
+    color:white;
+    text-align:center;
+  }
+  h1{ margin-top:25px; font-size:38px; }
+  .subtitle{
+    opacity:.88; margin:0 auto 18px; max-width:920px; padding:0 18px; line-height:1.5;
+  }
+
+  .panel{
+    width: 920px;
+    max-width: 92%;
+    margin: 18px auto;
+    background: white;
+    color: black;
+    border-radius: 20px;
+    padding: 18px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+    text-align:left;
+  }
+
+  .row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+    margin:10px 0;
+  }
+
+  .stat{
+    flex:1;
+    min-width:260px;
+    padding:14px;
+    border-radius:16px;
+    background:rgba(0,0,0,0.06);
+  }
+  .stat .big{ font-size:18px; font-weight:900; margin-bottom:4px; }
+  .stat .small{ opacity:.85; font-weight:600; }
+
+  button{
+    padding:12px 22px;
+    margin:8px 6px;
+    font-size:16px;
+    border:none;
+    border-radius:10px;
+    background:crimson;
+    color:white;
+    font-weight:800;
+    cursor:pointer;
+    transition:.25s;
+  }
+  button:hover{ background:darkred; }
+
+  .secondary{ background:#b11212; }
+  .secondary:hover{ background:#7d0b0b; }
+
+  input[type="number"]{
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid rgba(0,0,0,0.15);
+    width:140px;
+    font-size:16px;
+    text-align:center;
+    outline:none;
+    background:rgba(0,0,0,0.04);
+    font-family:'Poppins',sans-serif;
+  }
+
+  #canvasWrap{
+    width: 920px;
+    max-width: 92%;
+    margin: 18px auto;
+  }
+  canvas{
+    display:block;
+    width:100%;
+    height:340px;
+    border-radius:20px;
+    background:linear-gradient(to top,#f0f0f0,#c0c0c0);
+    box-shadow:0 15px 30px rgba(0,0,0,0.45);
+    border:none;
+    cursor: default;
+  }
+
+  table{
+    width:92%;
+    margin:16px auto 26px;
+    border-collapse:collapse;
+    border-radius:15px;
+    overflow:hidden;
+    box-shadow:0 10px 20px rgba(0,0,0,0.45);
+    background:rgba(255,255,255,0.08);
+    color:white;
+  }
+  table,th,td{ border:1px solid rgba(255,255,255,0.25); }
+  th,td{ padding:12px; text-align:center; }
+  th{ background:rgba(255,255,255,0.15); }
+  tr:nth-child(even){ background:rgba(255,255,255,0.06); }
+
+  .back-button{
+    display:inline-block;
+    margin:12px 10px 28px;
+    padding:12px 22px;
+    background:crimson;
+    color:white;
+    border-radius:10px;
+    text-decoration:none;
+    font-weight:800;
+    transition:.25s;
+  }
+  .back-button:hover{ background:darkred; }
+
+  .hint{
+    margin-top:10px;
+    opacity:.85;
+    font-weight:600;
+  }
+
+  .notice{
+    max-width: 920px;
+    margin: 10px auto 0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.12);
+    font-size: 14px;
+    opacity: 0.95;
+  }
+  .notice b{ color:#fff; }
+</style>
+</head>
+
+<body>
+<h1>🔋 Series Circuit (Drag & Add Resistors)</h1>
+
+<!-- ✅ статус логина как в остальных -->
+<div class="notice" id="authNotice">Loading user...</div>
+
+<p class="subtitle">
+  Drag resistors on/off the circuit wire. Only resistors placed on the wire are included in
+  \(R_{total}=\sum R_i\). Current is \(I=\frac{V}{R_{total}}\) with \(V=10\,\text{V}\).
+</p>
+
+<div class="panel">
+  <div class="row">
+    <div class="stat">
+      <div class="big">Battery Voltage: <span id="vText">10</span> V</div>
+      <div class="small">Fixed source for this simulation.</div>
+    </div>
+    <div class="stat">
+      <div class="big">Total Resistance: <span id="rtText">0</span> Ω</div>
+      <div class="small">\(R_{total}=\sum R_i\) (only ON-circuit)</div>
+    </div>
+    <div class="stat">
+      <div class="big">Total Current: <span id="iText">0</span> A</div>
+      <div class="small">\(I=\frac{V}{R_{total}}\)</div>
+    </div>
+  </div>
+
+  <div class="row" style="justify-content:flex-start;">
+    <button onclick="addResistor()">Add Resistor</button>
+    <button class="secondary" onclick="deleteSelected()">Delete Selected</button>
+
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <div style="font-weight:800;">Selected R (Ω):</div>
+      <input type="number" id="selectedR" min="0.1" step="0.1" value="5" oninput="updateSelectedValue()">
+    </div>
+
+    <button onclick="recordResult()">Record Result</button>
+    <button class="secondary" onclick="saveResultsToFile()">Save Results</button>
+    <button id="sendBtn" onclick="sendResultsEmail()">Send to Email</button>
+  </div>
+
+  <div class="hint">Tip: If you drag a resistor away from the wire, it becomes OFF and is not counted.</div>
+</div>
+
+<div id="canvasWrap">
+  <canvas id="circuitCanvas" width="920" height="340"></canvas>
+</div>
+
+<h2>Experiment Results</h2>
+<table id="resultsTable">
+  <thead>
+    <tr>
+      <th># Resistors (ON)</th>
+      <th>ON Values (Ω)</th>
+      <th>Total Resistance (Ω)</th>
+      <th>Total Current (A)</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<div>
+  <a href="electricity.html" class="back-button">⬅ Back to Electricity Experiments</a>
+  <a href="index.html" class="back-button">⬅ Back to Main Page</a>
+</div>
+
+<!-- ✅ Firebase auth (same as working pages) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCG_MCPpYlma9bqXkzRwt_3hsyxIL2jeUI",
+    authDomain: "physics-experiments-ib.firebaseapp.com",
+    projectId: "physics-experiments-ib",
+    storageBucket: "physics-experiments-ib.firebasestorage.app",
+    messagingSenderId: "283821061038",
+    appId: "1:283821061038:web:a8333e9406e4c3ead3ce3f"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  window.__currentUserEmail = null;
+  const authNotice = document.getElementById("authNotice");
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.__currentUserEmail = null;
+      authNotice.innerHTML = 'Status: <b>Guest</b> (login to send results to your email).';
+      return;
+    }
+
+    try { await user.reload(); } catch {}
+
+    if (!user.emailVerified) {
+      window.__currentUserEmail = null;
+      authNotice.innerHTML = 'Status: <b>Email not confirmed</b>. Confirm email in <b>index.html</b> then come back.';
+      return;
+    }
+
+    window.__currentUserEmail = user.email || null;
+    authNotice.innerHTML = `Logged in as: <b>${window.__currentUserEmail}</b>`;
+  });
+</script>
+
+<script>
+  /* =========================
+     ✅ EmailJS CONFIG (same as working pages)
+     ========================= */
+  const EMAILJS_PUBLIC_KEY  = "OF8tw55BMFQQIG8OM";
+  const EMAILJS_SERVICE_ID  = "service_xiyprvp";
+  const EMAILJS_TEMPLATE_ID = "template_rk45mwm";
+
+  (function initEmailJS(){
+    if (!window.emailjs) {
+      console.error("EmailJS not loaded");
+      return;
+    }
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+  })();
+
+  // ---------- Physics ----------
+  const V_BAT = 10;
+
+  // ---------- Canvas ----------
+  const canvas = document.getElementById("circuitCanvas");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width;
+  const H = canvas.height;
+
+  // Circuit rectangle path
+  const P0 = { x: 160, y: 80 };
+  const P1 = { x: W - 160, y: 80 };
+  const P2 = { x: W - 160, y: H - 80 };
+  const P3 = { x: 160, y: H - 80 };
+
+  function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+  const L0 = dist(P0,P1), L1 = dist(P1,P2), L2 = dist(P2,P3), L3 = dist(P3,P0);
+  const totalPathLength = L0+L1+L2+L3;
+
+  function getPointAt(t){
+    if(t < L0){
+      const r = t/L0;
+      return { x: P0.x + (P1.x-P0.x)*r, y: P0.y };
+    }else if(t < L0+L1){
+      const t2 = t-L0; const r = t2/L1;
+      return { x: P1.x, y: P1.y + (P2.y-P1.y)*r };
+    }else if(t < L0+L1+L2){
+      const t3 = t-(L0+L1); const r = t3/L2;
+      return { x: P2.x - (P2.x-P3.x)*r, y: P2.y };
+    }else{
+      const t4 = t-(L0+L1+L2); const r = t4/L3;
+      return { x: P3.x, y: P3.y - (P3.y-P0.y)*r };
+    }
+  }
+
+  // ---------- NEW: detect if resistor is on wire ----------
+  // distance point -> segment
+  function pointSegDist(px, py, ax, ay, bx, by){
+    const abx = bx-ax, aby = by-ay;
+    const apx = px-ax, apy = py-ay;
+    const ab2 = abx*abx + aby*aby;
+    let t = 0;
+    if(ab2 > 0) t = (apx*abx + apy*aby) / ab2;
+    t = Math.max(0, Math.min(1, t));
+    const cx = ax + t*abx;
+    const cy = ay + t*aby;
+    return Math.hypot(px-cx, py-cy);
+  }
+
+  function isOnCircuit(r){
+    // threshold: how close to wire counts as "on"
+    const TH = 18;
+
+    const dTop    = pointSegDist(r.x, r.y, P0.x, P0.y, P1.x, P1.y);
+    const dRight  = pointSegDist(r.x, r.y, P1.x, P1.y, P2.x, P2.y);
+    const dBottom = pointSegDist(r.x, r.y, P2.x, P2.y, P3.x, P3.y);
+    const dLeft   = pointSegDist(r.x, r.y, P3.x, P3.y, P0.x, P0.y);
+
+    const d = Math.min(dTop, dRight, dBottom, dLeft);
+    return d <= TH;
+  }
+
+  // ---------- Resistors (draggable objects) ----------
+  let nextId = 1;
+  const resistors = [
+    { id: nextId++, x: P0.x + 140, y: P0.y, R: 5 },
+    { id: nextId++, x: P0.x + 300, y: P0.y, R: 5 },
+    { id: nextId++, x: P0.x + 460, y: P0.y, R: 5 }
+  ];
+
+  let selectedId = resistors[0].id;
+
+  // Drag state
+  let dragging = false;
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+
+  // Electron animation
+  const numElectrons = 7;
+  const electrons = [];
+  for(let i=0;i<numElectrons;i++){
+    electrons.push({ t: (i*totalPathLength)/numElectrons });
+  }
+  let lastTime = null;
+
+  // Results
+  let results = [];
+
+  // UI elements
+  const vText = document.getElementById("vText");
+  const rtText = document.getElementById("rtText");
+  const iText = document.getElementById("iText");
+  const selectedRInput = document.getElementById("selectedR");
+
+  vText.textContent = V_BAT.toFixed(0);
+
+  function totalResistance(){
+    // ✅ only resistors ON circuit
+    const on = resistors.filter(isOnCircuit);
+    const sum = on.reduce((acc,r)=>acc + Math.max(0.0001, r.R), 0);
+    // if none on circuit, avoid division by zero by returning Infinity-ish
+    return (on.length === 0) ? Infinity : sum;
+  }
+
+  function totalCurrent(){
+    const Rt = totalResistance();
+    if(!isFinite(Rt) || Rt <= 0) return 0;
+    return V_BAT / Rt;
+  }
+
+  function syncUI(){
+    const Rt = totalResistance();
+    const I = totalCurrent();
+
+    rtText.textContent = isFinite(Rt) ? Rt.toFixed(2) : "∞";
+    iText.textContent = I.toFixed(2);
+
+    const sel = resistors.find(r=>r.id===selectedId);
+    if(sel){
+      selectedRInput.value = sel.R.toFixed(2);
+    }else{
+      selectedRInput.value = "";
+    }
+  }
+
+  function addResistor(){
+    const x = P0.x + 120 + Math.random()*(L0-240);
+    resistors.push({ id: nextId++, x, y: P0.y, R: 5 });
+    selectedId = resistors[resistors.length-1].id;
+    syncUI();
+  }
+
+  function deleteSelected(){
+    if(resistors.length <= 1) return;
+    const idx = resistors.findIndex(r=>r.id===selectedId);
+    if(idx !== -1){
+      resistors.splice(idx,1);
+      selectedId = resistors[Math.max(0, idx-1)].id;
+      syncUI();
+    }
+  }
+
+  function updateSelectedValue(){
+    const sel = resistors.find(r=>r.id===selectedId);
+    if(!sel) return;
+    let v = parseFloat(selectedRInput.value);
+    if(Number.isNaN(v)) v = sel.R;
+    sel.R = Math.max(0.1, v);
+    syncUI();
+  }
+
+  function recordResult(){
+    const on = resistors.filter(isOnCircuit);
+    const Rt = totalResistance();
+    const I = totalCurrent();
+    const values = on.map(r=>r.R.toFixed(2)).join(", ");
+
+    results.push({
+      n: on.length,
+      values: values || "(none)",
+      Rt: isFinite(Rt) ? Rt.toFixed(2) : "∞",
+      I: I.toFixed(2)
+    });
+    updateResultsTable();
+  }
+
+  function updateResultsTable(){
+    const tbody = document.querySelector("#resultsTable tbody");
+    tbody.innerHTML = "";
+    results.forEach(r=>{
+      tbody.innerHTML += `
+        <tr>
+          <td>${r.n}</td>
+          <td>${r.values}</td>
+          <td>${r.Rt}</td>
+          <td>${r.I}</td>
+        </tr>`;
+    });
+  }
+
+  function saveResultsToFile(){
+    const raw = JSON.stringify(results, null, 2);
+    const blob = new Blob([raw], {type:'text/plain'});
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "series_circuit_results.txt";
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
+  // ✅ EmailJS send (same as other working experiments)
+  function sendResultsEmail(){
+    const studentEmail = window.__currentUserEmail;
+    const sendBtn = document.getElementById("sendBtn");
+
+    if (!studentEmail) {
+      alert("You are not logged in (or email not confirmed). Please login on the main page first.");
+      return;
+    }
+    if (!results.length) {
+      alert("No results yet. Record at least one result first.");
+      return;
+    }
+    if (!window.emailjs) {
+      alert("EmailJS library not loaded. Check your internet connection.");
+      return;
+    }
+
+    const params = {
+      email: studentEmail,
+      name: studentEmail,
+      results: JSON.stringify(results, null, 2)
+    };
+
+    sendBtn.disabled = true;
+
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params)
+      .then(() => alert("✅ Results sent to your email!"))
+      .catch((err) => {
+        console.error(err);
+        alert("❌ Failed to send email. Open console for details.");
+      })
+      .finally(() => {
+        sendBtn.disabled = false;
+      });
+  }
+
+  // ---------- Drawing ----------
+  function drawWire(){
+    ctx.strokeStyle = "#222";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(P0.x, P0.y);
+    ctx.lineTo(P1.x, P1.y);
+    ctx.lineTo(P2.x, P2.y);
+    ctx.lineTo(P3.x, P3.y);
+    ctx.closePath();
+    ctx.stroke();
+  }
+
+  function drawBattery(){
+    const x = P3.x - 10;
+    const y = (P3.y + P0.y)/2;
+
+    ctx.strokeStyle = "#111";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x, y-26); ctx.lineTo(x, y+26);
+    ctx.stroke();
+
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x+18, y-16); ctx.lineTo(x+18, y+16);
+    ctx.stroke();
+
+    ctx.fillStyle = "#111";
+    ctx.font = "bold 14px Poppins";
+    ctx.fillText("10V", x-12, y-34);
+  }
+
+  function drawResistor(r){
+    const on = isOnCircuit(r);
+    const w = 84, h = 32;
+    const x = r.x, y = r.y;
+
+    // shadow-ish
+    ctx.fillStyle = "rgba(0,0,0,0.12)";
+    ctx.fillRect(x - w/2 + 2, y - h/2 + 2, w, h);
+
+    // body (fade if OFF)
+    ctx.fillStyle = on ? "rgba(255,255,255,0.60)" : "rgba(255,255,255,0.30)";
+    ctx.fillRect(x - w/2, y - h/2, w, h);
+
+    ctx.strokeStyle = (r.id === selectedId) ? "#8E0E00" : "#111";
+    ctx.lineWidth = (r.id === selectedId) ? 3 : 2;
+    ctx.strokeRect(x - w/2, y - h/2, w, h);
+
+    ctx.fillStyle = on ? "#111" : "rgba(17,17,17,0.55)";
+    ctx.font = "bold 14px Poppins";
+    ctx.fillText("R", x - 5, y + 5);
+
+    ctx.font = "12px Poppins";
+    const txt = r.R.toFixed(1) + "Ω";
+    ctx.fillText(txt, x - ctx.measureText(txt).width/2, y + 22);
+
+    if(!on){
+      ctx.fillStyle = "rgba(142,14,0,0.95)";
+      ctx.font = "bold 11px Poppins";
+      ctx.fillText("OFF", x - 13, y - 16);
+    }
+  }
+
+  function drawElectrons(deltaTime){
+    const I = totalCurrent();
+    const speed = I * 150;
+
+    electrons.forEach(e=>{
+      e.t += speed * deltaTime;
+      if(e.t > totalPathLength) e.t -= totalPathLength;
+      const p = getPointAt(e.t);
+
+      ctx.fillStyle = "rgba(0,0,255,0.20)";
+      ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, 2*Math.PI); ctx.fill();
+
+      ctx.fillStyle = "#1e4bff";
+      ctx.beginPath(); ctx.arc(p.x, p.y, 5.8, 0, 2*Math.PI); ctx.fill();
+    });
+  }
+
+  function render(deltaTime){
+    ctx.clearRect(0,0,W,H);
+    drawWire();
+    drawBattery();
+    resistors.forEach(drawResistor);
+    drawElectrons(deltaTime);
+  }
+
+  function animate(ts){
+    if(!lastTime) lastTime = ts;
+    const dt = (ts - lastTime)/1000;
+    lastTime = ts;
+
+    // keep UI always updated with ON/OFF changes
+    syncUI();
+
+    render(dt);
+    requestAnimationFrame(animate);
+  }
+
+  // ---------- Drag & Drop ----------
+  function getMousePos(evt){
+    const rect = canvas.getBoundingClientRect();
+    const sx = canvas.width / rect.width;
+    const sy = canvas.height / rect.height;
+    return {
+      x: (evt.clientX - rect.left) * sx,
+      y: (evt.clientY - rect.top) * sy
+    };
+  }
+
+  function hitTestResistor(mx,my,r){
+    const w = 84, h = 32;
+    return (mx >= r.x - w/2 && mx <= r.x + w/2 && my >= r.y - h/2 && my <= r.y + h/2);
+  }
+
+  canvas.addEventListener("mousedown", (e)=>{
+    const m = getMousePos(e);
+    for(let i=resistors.length-1;i>=0;i--){
+      const r = resistors[i];
+      if(hitTestResistor(m.x,m.y,r)){
+        selectedId = r.id;
+        dragging = true;
+        dragOffsetX = m.x - r.x;
+        dragOffsetY = m.y - r.y;
+        canvas.style.cursor = "grabbing";
+        syncUI();
+        return;
+      }
+    }
+  });
+
+  window.addEventListener("mousemove", (e)=>{
+    if(!dragging) return;
+    const sel = resistors.find(r=>r.id===selectedId);
+    if(!sel) return;
+
+    const m = getMousePos(e);
+    sel.x = m.x - dragOffsetX;
+    sel.y = m.y - dragOffsetY;
+
+    // keep inside canvas bounds
+    const w = 84, h = 32;
+    sel.x = Math.min(W - w/2 - 6, Math.max(w/2 + 6, sel.x));
+    sel.y = Math.min(H - h/2 - 6, Math.max(h/2 + 6, sel.y));
+  });
+
+  window.addEventListener("mouseup", ()=>{
+    dragging = false;
+    canvas.style.cursor = "default";
+  });
+
+  // Touch support
+  canvas.addEventListener("touchstart", (e)=>{
+    const t = e.touches[0];
+    const m = getMousePos(t);
+    for(let i=resistors.length-1;i>=0;i--){
+      const r = resistors[i];
+      if(hitTestResistor(m.x,m.y,r)){
+        selectedId = r.id;
+        dragging = true;
+        dragOffsetX = m.x - r.x;
+        dragOffsetY = m.y - r.y;
+        syncUI();
+        break;
+      }
+    }
+  }, {passive:true});
+
+  window.addEventListener("touchmove", (e)=>{
+    if(!dragging) return;
+    const t = e.touches[0];
+    const sel = resistors.find(r=>r.id===selectedId);
+    if(!sel) return;
+
+    const m = getMousePos(t);
+    sel.x = m.x - dragOffsetX;
+    sel.y = m.y - dragOffsetY;
+
+    const w = 84, h = 32;
+    sel.x = Math.min(W - w/2 - 6, Math.max(w/2 + 6, sel.x));
+    sel.y = Math.min(H - h/2 - 6, Math.max(h/2 + 6, sel.y));
+  }, {passive:true});
+
+  window.addEventListener("touchend", ()=>{
+    dragging = false;
+  });
+
+  // Init
+  syncUI();
+  requestAnimationFrame(animate);
+</script>
+</body>
+</html>

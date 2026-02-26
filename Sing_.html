@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Single-Slit Diffraction — Simulator</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+  <!-- ✅ EmailJS SDK (Browser) -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <style>
+    :root{
+      --bg1:#00c6ff;
+      --bg2:#0072ff;
+
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#475569;
+
+      --accent:#0072ff;
+      --accent2:#005bb5;
+
+      --shadow:0 18px 45px rgba(0,0,0,.35);
+      --radius:22px;
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      font-family:'Poppins', sans-serif;
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      color:white;
+      text-align:center;
+      padding: 28px 18px 40px;
+    }
+
+    h1{
+      margin: 10px 0 6px;
+      font-size: clamp(26px, 3.2vw, 40px);
+      letter-spacing: .2px;
+    }
+
+    .subtitle{
+      margin: 0 0 14px;
+      opacity:.88;
+      font-weight:300;
+      max-width: 1050px;
+      margin-left:auto;
+      margin-right:auto;
+      line-height: 1.5;
+    }
+
+    /* ✅ status boxes */
+    .notice{
+      max-width:1100px;
+      margin: 10px auto 18px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.22);
+      font-size: 14px;
+      opacity: 0.95;
+      text-align:center;
+    }
+    #emailStatus{
+      display:none;
+      max-width:1100px;
+      margin: -6px auto 18px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      border: 1px solid rgba(255,255,255,0.22);
+      text-align:center;
+      background: rgba(255,255,255,0.12);
+    }
+
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      display:grid;
+      grid-template-columns: 390px 1fr;
+      gap: 18px;
+      align-items:start;
+    }
+
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: var(--card);
+      color: var(--ink);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      text-align:left;
+    }
+
+    .card h2{
+      margin: 0 0 10px;
+      font-size: 18px;
+      letter-spacing:.2px;
+    }
+
+    .row{
+      display:grid;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .control{
+      background: rgba(2, 6, 23, 0.03);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .control label{
+      display:flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      gap: 10px;
+    }
+
+    .control label strong{
+      color: var(--ink);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--accent);
+    }
+
+    .hint{
+      font-size: 12px;
+      color: var(--muted);
+      opacity: .9;
+      margin-top: 6px;
+      line-height: 1.35;
+    }
+
+    .pill{
+      display:inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(0,114,255,.10);
+      color: var(--accent2);
+      margin-right: 8px;
+    }
+
+    .output{
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(15,23,42,.10);
+      background: rgba(2, 6, 23, 0.03);
+      font-size: 14px;
+      color: var(--ink);
+      line-height: 1.45;
+    }
+
+    .output b{ font-weight: 900; }
+
+    .btnRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      justify-content:flex-start;
+      margin-top: 12px;
+    }
+
+    button{
+      border:none;
+      cursor:pointer;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-family: inherit;
+      font-weight: 800;
+      transition: .2s;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+    }
+
+    .primary{
+      background: var(--accent);
+      color:white;
+      box-shadow: 0 10px 22px rgba(0,0,0,.18);
+    }
+    .primary:hover{ transform: translateY(-2px); background: var(--accent2); }
+
+    .ghost{
+      background: rgba(15,23,42,.06);
+      color: var(--ink);
+      border: 1px solid rgba(15,23,42,.12);
+    }
+    .ghost:hover{ transform: translateY(-2px); background: rgba(15,23,42,.10); }
+
+    .danger{
+      background: rgba(220,38,38,.10);
+      color:#b91c1c;
+      border: 1px solid rgba(185,28,28,.20);
+    }
+    .danger:hover{ transform: translateY(-2px); background: rgba(220,38,38,.16); }
+
+    .canvasCard{
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: 0 18px 45px rgba(0,0,0,.20);
+      backdrop-filter: blur(6px);
+      text-align:left;
+    }
+
+    .canvasTitle{
+      color: rgba(255,255,255,.95);
+      font-weight: 800;
+      margin: 2px 4px 10px;
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .canvasTitle .mini{
+      opacity:.85;
+      font-weight: 500;
+      font-size: 12px;
+    }
+
+    canvas{
+      width: 100%;
+      height: auto;
+      display:block;
+      border-radius: 18px;
+      background: rgba(255,255,255,.88);
+      border: 1px solid rgba(0,0,0,.08);
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .legend{
+      display:flex;
+      gap: 14px;
+      flex-wrap:wrap;
+      margin-top: 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,.90);
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      display:inline-block; margin-right:8px;
+      transform: translateY(1px);
+    }
+
+    .tableCard{
+      max-width:1100px;
+      margin:18px auto 0;
+    }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      overflow:hidden;
+      border-radius: 16px;
+      border: 1px solid rgba(15,23,42,.10);
+    }
+
+    thead th{
+      text-align:left;
+      font-size: 12px;
+      letter-spacing: .2px;
+      color: var(--muted);
+      background: rgba(2,6,23,.04);
+      padding: 10px 12px;
+    }
+
+    tbody td{
+      padding: 10px 12px;
+      border-top: 1px solid rgba(15,23,42,.08);
+      font-size: 14px;
+    }
+
+    tbody tr:hover{ background: rgba(0,114,255,.06); }
+
+    .footerLinks{
+      margin-top: 18px;
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content:center;
+    }
+
+    .footerLinks a{
+      background: rgba(255,255,255,.16);
+      border: 1px solid rgba(255,255,255,.22);
+      color:white;
+      padding: 10px 14px;
+      border-radius: 12px;
+      text-decoration:none;
+      font-weight:800;
+      transition:.2s;
+    }
+    .footerLinks a:hover{
+      transform: translateY(-2px);
+      background: rgba(255,255,255,.22);
+    }
+  </style>
+</head>
+
+<body>
+  <h1>➖ Single-Slit Diffraction</h1>
+  <p class="subtitle">
+    Top: plane wavefronts pass through one slit and spread out (Huygens).<br/>
+    Bottom: theoretical intensity on the screen for single-slit diffraction.
+  </p>
+
+  <!-- ✅ Auth + Email status -->
+  <div class="notice" id="authNotice">Loading user...</div>
+  <div class="notice" id="emailStatus"></div>
+
+  <div class="wrap">
+    <!-- LEFT: Controls -->
+    <div class="card">
+      <h2>Controls</h2>
+
+      <div class="row">
+        <div class="control">
+          <label for="lambdaNM">
+            <span>Wavelength λ</span>
+            <strong><span id="lambdaVal">550</span> nm</strong>
+          </label>
+          <input type="range" id="lambdaNM" min="380" max="780" value="550" />
+          <div class="hint">Smaller λ → narrower central maximum.</div>
+        </div>
+
+        <div class="control">
+          <label for="slitWidthMM">
+            <span>Slit width a</span>
+            <strong><span id="aVal">0.50</span> mm</strong>
+          </label>
+          <input type="range" id="slitWidthMM" min="0.10" max="2.00" value="0.50" step="0.01" />
+          <div class="hint">Smaller a → diffraction spreads more.</div>
+        </div>
+
+        <div class="control">
+          <label for="distL">
+            <span>Screen distance L</span>
+            <strong><span id="LVal">1.00</span> m</strong>
+          </label>
+          <input type="range" id="distL" min="0.50" max="3.00" value="1.00" step="0.01" />
+          <div class="hint">L larger → fringes spread out (in meters on the screen).</div>
+        </div>
+
+        <div class="output">
+          <div style="margin-bottom:8px;">
+            <span class="pill">Key</span>
+            <span>First minimum: <b>y₁ = L·λ / a</b></span>
+          </div>
+          <div>Current: y₁ ≈ <b><span id="y1Val">—</span></b> mm</div>
+        </div>
+
+        <div class="btnRow">
+          <button class="primary" id="startBtn">▶ Start</button>
+          <button class="ghost" id="restartBtn">🔁 Restart</button>
+
+          <button class="primary" id="recordBtn">🧾 Record</button>
+          <button class="ghost" id="saveBtn">💾 Save</button>
+          <button class="ghost" id="sendBtn">✉️ Send to Email</button>
+          <button class="danger" id="clearBtn">🧹 Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Visuals -->
+    <div class="canvasCard">
+      <div class="canvasTitle">
+        <span>Wave diagram + Screen intensity</span>
+        <span class="mini">one slit → diffraction envelope</span>
+      </div>
+
+      <div class="grid2">
+        <canvas id="waveCanvas" width="900" height="320"></canvas>
+        <canvas id="screenCanvas" width="900" height="220"></canvas>
+      </div>
+
+      <div class="legend">
+        <span><span class="dot" style="background:rgba(0,114,255,.95)"></span>Incoming wavefronts</span>
+        <span><span class="dot" style="background:rgba(220,38,38,.92)"></span>Waves from slit</span>
+        <span><span class="dot" style="background:rgba(0,0,0,.55)"></span>Barrier + slit</span>
+        <span><span class="dot" style="background:rgba(255,255,255,.95); border:1px solid rgba(0,0,0,.2)"></span>Screen brightness</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Table -->
+  <div class="card tableCard">
+    <h2 style="margin-bottom:12px;">Recorded Results</h2>
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th>λ (nm)</th>
+          <th>a (mm)</th>
+          <th>L (m)</th>
+          <th>y₁ (mm)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="footerLinks">
+    <a href="waves.html">⬅ Back to Waves</a>
+    <a href="index.html">🏠 Main Page</a>
+  </div>
+
+  <!-- ✅ Firebase auth (same as your working pages) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCG_MCPpYlma9bqXkzRwt_3hsyxIL2jeUI",
+      authDomain: "physics-experiments-ib.firebaseapp.com",
+      projectId: "physics-experiments-ib",
+      storageBucket: "physics-experiments-ib.firebasestorage.app",
+      messagingSenderId: "283821061038",
+      appId: "1:283821061038:web:a8333e9406e4c3ead3ce3f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    window.__currentUserEmail = null;
+    const authNotice = document.getElementById("authNotice");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.__currentUserEmail = null;
+        authNotice.innerHTML = 'Status: <b>Guest</b> (login to send results).';
+        return;
+      }
+
+      try { await user.reload(); } catch {}
+
+      if (!user.emailVerified) {
+        window.__currentUserEmail = null;
+        authNotice.innerHTML = 'Status: <b>Email not confirmed</b>. Confirm email in <b>index.html</b> then come back.';
+        return;
+      }
+
+      window.__currentUserEmail = user.email || null;
+      authNotice.innerHTML = `Logged in as: <b>${window.__currentUserEmail}</b>`;
+    });
+  </script>
+
+  <script>
+    /* =========================
+       ✅ EmailJS CONFIG (same as working pages)
+       ========================= */
+    const EMAILJS_PUBLIC_KEY  = "OF8tw55BMFQQIG8OM";
+    const EMAILJS_SERVICE_ID  = "service_xiyprvp";
+    const EMAILJS_TEMPLATE_ID = "template_rk45mwm";
+
+    function setEmailStatus(type, msg){
+      const box = document.getElementById("emailStatus");
+      box.style.display = "block";
+      box.innerHTML = msg;
+      box.style.border = "1px solid rgba(255,255,255,0.22)";
+      box.style.background = (type === "ok")
+        ? "rgba(76,175,80,0.20)"
+        : "rgba(255,76,76,0.20)";
+    }
+
+    function waitForEmailJS(timeoutMs = 8000){
+      return new Promise((resolve, reject) => {
+        const start = Date.now();
+        (function check(){
+          if (window.emailjs && typeof window.emailjs.send === "function") return resolve();
+          if (Date.now() - start > timeoutMs) return reject(new Error("EmailJS not loaded (timeout)"));
+          setTimeout(check, 50);
+        })();
+      });
+    }
+
+    (async function initEmailJS(){
+      try{
+        await waitForEmailJS();
+        emailjs.init(EMAILJS_PUBLIC_KEY);
+        console.log("✅ EmailJS initialized");
+      }catch(e){
+        console.error("❌ EmailJS init failed:", e);
+        setEmailStatus("err", "❌ EmailJS failed to load. Check internet / blocked CDN.");
+      }
+    })();
+
+    /**************************************************************
+     * UI (nm, mm, m) — Computation uses meters.
+     **************************************************************/
+    const lambdaSlider = document.getElementById("lambdaNM");     // nm
+    const aSlider = document.getElementById("slitWidthMM");       // mm
+    const LSlider = document.getElementById("distL");             // m
+
+    const lambdaVal = document.getElementById("lambdaVal");
+    const aVal = document.getElementById("aVal");
+    const LVal = document.getElementById("LVal");
+    const y1Val = document.getElementById("y1Val");
+
+    const startBtn = document.getElementById("startBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const recordBtn = document.getElementById("recordBtn");
+    const saveBtn = document.getElementById("saveBtn");
+    const sendBtn = document.getElementById("sendBtn");
+    const clearBtn = document.getElementById("clearBtn");
+
+    let results = [];
+
+    /**************************************************************
+     * CANVASES
+     **************************************************************/
+    const waveCanvas = document.getElementById("waveCanvas");
+    const wctx = waveCanvas.getContext("2d");
+
+    const screenCanvas = document.getElementById("screenCanvas");
+    const sctx = screenCanvas.getContext("2d");
+
+    const waveW = waveCanvas.width;
+    const waveH = waveCanvas.height;
+    const scrW = screenCanvas.width;
+    const scrH = screenCanvas.height;
+
+    const barrierX = Math.floor(waveW * 0.36);
+
+    // animation state
+    let diagramTime = 0;
+    let running = false;
+    let rafId = null;
+
+    function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+
+    function getParams(){
+      const lam_nm = parseFloat(lambdaSlider.value);
+      const a_mm = parseFloat(aSlider.value);
+      const L_m  = parseFloat(LSlider.value);
+
+      const lam = lam_nm * 1e-9;
+      const a   = a_mm  * 1e-3;
+
+      return { lam_nm, a_mm, L_m, lam, a };
+    }
+
+    function updateLabels(){
+      const p = getParams();
+      lambdaVal.textContent = p.lam_nm.toFixed(0);
+      aVal.textContent = p.a_mm.toFixed(2);
+      LVal.textContent = p.L_m.toFixed(2);
+
+      const y1 = (p.L_m * p.lam) / p.a; // meters
+      y1Val.textContent = (y1 * 1e3).toFixed(2); // mm
+    }
+
+    /**************************************************************
+     * Single-slit intensity:
+     * I(θ) ∝ (sin β / β)^2, β = π a sinθ / λ
+     * small angle: sinθ ≈ y/L
+     **************************************************************/
+    function intensityAtY(y, p){
+      const theta = y / p.L_m;
+      const s = theta;
+      const beta = Math.PI * p.a * s / p.lam;
+      if (Math.abs(beta) < 1e-9) return 1;
+      return Math.pow(Math.sin(beta)/beta, 2);
+    }
+
+    function drawScreen(){
+      const p = getParams();
+      sctx.clearRect(0,0,scrW,scrH);
+
+      const y1 = p.L_m * p.lam / p.a;
+      const Ymax = 2.8 * y1;
+      const yMin = -Ymax;
+
+      const img = sctx.createImageData(scrW, scrH);
+      for(let x=0; x<scrW; x++){
+        const y = yMin + (x/(scrW-1))*(Ymax - yMin);
+        const I = intensityAtY(y, p);
+        const b = clamp(I, 0, 1);
+        const v = Math.floor(255 * b);
+        for(let yy=0; yy<scrH; yy++){
+          const idx = (yy*scrW + x)*4;
+          img.data[idx+0] = v;
+          img.data[idx+1] = v;
+          img.data[idx+2] = v;
+          img.data[idx+3] = 255;
+        }
+      }
+      sctx.putImageData(img, 0, 0);
+
+      sctx.save();
+
+      const midX = Math.floor(scrW/2);
+      sctx.strokeStyle = "rgba(15,23,42,.45)";
+      sctx.lineWidth = 2;
+      sctx.beginPath();
+      sctx.moveTo(midX, 0);
+      sctx.lineTo(midX, scrH);
+      sctx.stroke();
+
+      sctx.fillStyle = "rgba(15,23,42,.82)";
+      sctx.font = "700 14px Poppins, Arial";
+      sctx.fillText("Screen brightness (single-slit intensity)", 14, 22);
+
+      sctx.font = "500 12px Poppins, Arial";
+      sctx.fillStyle = "rgba(15,23,42,.70)";
+      sctx.fillText(`y-range: ±${(Ymax*1e3).toFixed(2)} mm`, 14, 40);
+
+      const scaleX = scrW/(Ymax - yMin);
+      sctx.setLineDash([6,6]);
+      sctx.strokeStyle = "rgba(0,114,255,.55)";
+      sctx.font = "700 11px Poppins, Arial";
+      sctx.fillStyle = "rgba(15,23,42,.70)";
+
+      for(let m=1; m<=4; m++){
+        const y_m = m * y1;
+        if(y_m > Ymax) break;
+
+        const xPlus = ( y_m - yMin) * scaleX;
+        const xMinus = (-y_m - yMin) * scaleX;
+
+        sctx.beginPath(); sctx.moveTo(xPlus, 0); sctx.lineTo(xPlus, scrH); sctx.stroke();
+        sctx.beginPath(); sctx.moveTo(xMinus,0); sctx.lineTo(xMinus,scrH); sctx.stroke();
+
+        sctx.fillText(`m=${m} min`, xPlus + 4, 56 + (m-1)*12);
+      }
+      sctx.setLineDash([]);
+      sctx.restore();
+
+      sctx.save();
+      sctx.strokeStyle = "rgba(0,114,255,.95)";
+      sctx.lineWidth = 2.2;
+      sctx.beginPath();
+      for(let x=0; x<scrW; x++){
+        const y = yMin + (x/(scrW-1))*(Ymax - yMin);
+        const I = intensityAtY(y, p);
+        const py = scrH - clamp(I,0,1)*(scrH-8) - 4;
+        if(x===0) sctx.moveTo(x, py);
+        else sctx.lineTo(x, py);
+      }
+      sctx.stroke();
+      sctx.restore();
+    }
+
+    /**************************************************************
+     * Wave diagram
+     **************************************************************/
+    function drawBarrierAndSlit(slitHeightPx){
+      const halfSlit = slitHeightPx/2;
+      const slitTop = (waveH/2) - halfSlit;
+      const slitBot = (waveH/2) + halfSlit;
+
+      wctx.save();
+      wctx.fillStyle = "rgba(15,23,42,.70)";
+      wctx.fillRect(barrierX, 0, 12, slitTop);
+      wctx.fillRect(barrierX, slitBot, 12, waveH - slitBot);
+      wctx.restore();
+
+      wctx.save();
+      wctx.strokeStyle = "rgba(255,255,255,.85)";
+      wctx.lineWidth = 2;
+      wctx.strokeRect(barrierX, slitTop, 12, slitHeightPx);
+      wctx.fillStyle = "rgba(15,23,42,.75)";
+      wctx.font = "700 13px Poppins, Arial";
+      wctx.fillText("Barrier", barrierX - 48, 20);
+      wctx.restore();
+
+      return { slitTop, slitBot, halfSlit };
+    }
+
+    function drawIncomingWaves(waveLambdaPx, waveSpeedPxPerFrame){
+      const offset = (waveSpeedPxPerFrame * diagramTime) % waveLambdaPx;
+
+      wctx.save();
+      wctx.strokeStyle = "rgba(0,114,255,.95)";
+      wctx.lineWidth = 1.3;
+
+      for(let lineX = -waveLambdaPx; lineX < barrierX + waveLambdaPx; lineX += waveLambdaPx){
+        const x = lineX + offset;
+        if(x < 0) continue;
+        if(x > barrierX) break;
+        wctx.beginPath();
+        wctx.moveTo(x, 0);
+        wctx.lineTo(x, waveH);
+        wctx.stroke();
+      }
+      wctx.restore();
+    }
+
+    function drawOutgoingArcs(waveLambdaPx, waveSpeedPxPerFrame, slit){
+      const arrivalTime = barrierX / waveSpeedPxPerFrame;
+      const dtBehind = diagramTime - arrivalTime;
+      if(dtBehind < 0) return;
+
+      const maxRadius = (waveW - barrierX) + 80;
+      const nMax = Math.floor(maxRadius / waveLambdaPx);
+
+      wctx.save();
+      wctx.strokeStyle = "rgba(220,38,38,.92)";
+      wctx.lineWidth = 1.1;
+
+      const N_SOURCES = 9;
+      const step = (slit.halfSlit*2) / (N_SOURCES - 1);
+
+      const points = [];
+      for(let i=0; i<N_SOURCES; i++){
+        points.push({ x: barrierX + 6, y: (waveH/2 - slit.halfSlit) + i*step });
+      }
+
+      const baseRadius = waveSpeedPxPerFrame * dtBehind;
+      for(const sp of points){
+        for(let n=0; n<=nMax; n++){
+          const r = baseRadius - n*waveLambdaPx;
+          if(r < 0 || r > maxRadius) continue;
+          wctx.beginPath();
+          wctx.arc(sp.x, sp.y, r, -0.35*Math.PI, 0.35*Math.PI);
+          wctx.stroke();
+        }
+      }
+      wctx.restore();
+    }
+
+    function drawDiagramStep(){
+      const p = getParams();
+      wctx.clearRect(0,0,waveW,waveH);
+
+      const waveLambdaPx = 26 + (780 - p.lam_nm) * 0.02;
+      const waveSpeedPxPerFrame = 2.2;
+
+      const slitHeightPx = clamp(p.a_mm * 110, 28, 170);
+
+      wctx.save();
+      const g = wctx.createLinearGradient(0,0,0,waveH);
+      g.addColorStop(0, "rgba(255,255,255,.92)");
+      g.addColorStop(1, "rgba(245,248,255,.92)");
+      wctx.fillStyle = g;
+      wctx.fillRect(0,0,waveW,waveH);
+      wctx.restore();
+
+      const slit = drawBarrierAndSlit(slitHeightPx);
+
+      wctx.save();
+      wctx.strokeStyle = "rgba(15,23,42,.40)";
+      wctx.lineWidth = 2;
+      wctx.beginPath();
+      wctx.moveTo(waveW - 26, 14);
+      wctx.lineTo(waveW - 26, waveH - 14);
+      wctx.stroke();
+      wctx.fillStyle = "rgba(15,23,42,.70)";
+      wctx.font = "700 12px Poppins, Arial";
+      wctx.fillText("Screen", waveW - 70, 20);
+      wctx.restore();
+
+      drawIncomingWaves(waveLambdaPx, waveSpeedPxPerFrame);
+      drawOutgoingArcs(waveLambdaPx, waveSpeedPxPerFrame, slit);
+
+      wctx.save();
+      const xScreen = waveW - 26;
+
+      const y1 = p.L_m * p.lam / p.a;
+      const Ymax = 2.2 * y1;
+
+      for(let y=0; y<waveH; y++){
+        const yNorm = (y - waveH/2) / (waveH/2);
+        const yMeters = yNorm * Ymax;
+        const I = intensityAtY(yMeters, p);
+        const a = clamp(I, 0, 1) * 0.9;
+        wctx.strokeStyle = `rgba(0,0,0,${0.06 + a*0.22})`;
+        wctx.beginPath();
+        wctx.moveTo(xScreen-8, y);
+        wctx.lineTo(xScreen+8, y);
+        wctx.stroke();
+      }
+      wctx.restore();
+
+      wctx.save();
+      wctx.fillStyle = "rgba(15,23,42,.78)";
+      wctx.font = "700 13px Poppins, Arial";
+      wctx.fillText("Plane waves →", 18, 22);
+      wctx.fillText("Diffraction →", barrierX + 18, 22);
+      wctx.restore();
+
+      diagramTime += 1;
+
+      if(running){
+        rafId = requestAnimationFrame(drawDiagramStep);
+      }
+    }
+
+    /**************************************************************
+     * Start/Stop/Restart
+     **************************************************************/
+    function startExperiment(){
+      if(running) return;
+      running = true;
+      startBtn.textContent = "⏸ Stop";
+      drawDiagramStep();
+    }
+
+    function stopExperiment(){
+      running = false;
+      startBtn.textContent = "▶ Start";
+      if(rafId) cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+
+    function toggleExperiment(){
+      if(running) stopExperiment();
+      else startExperiment();
+    }
+
+    function restartExperiment(){
+      const wasRunning = running;
+      stopExperiment();
+      diagramTime = 0;
+      drawScreen();
+      drawDiagramStep();
+      if(wasRunning) startExperiment();
+    }
+
+    /**************************************************************
+     * RESULTS
+     **************************************************************/
+    function updateResultsTable(){
+      const tbody = document.querySelector("#resultsTable tbody");
+      tbody.innerHTML = "";
+      results.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r.lambda_nm}</td>
+          <td>${r.a_mm}</td>
+          <td>${r.L_m}</td>
+          <td>${r.y1_mm}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function recordResult(){
+      const p = getParams();
+      const y1 = (p.L_m * p.lam) / p.a;
+
+      results.push({
+        lambda_nm: p.lam_nm.toFixed(0),
+        a_mm: p.a_mm.toFixed(2),
+        L_m: p.L_m.toFixed(2),
+        y1_mm: (y1 * 1e3).toFixed(2)
+      });
+
+      updateResultsTable();
+    }
+
+    function saveResultsToFile(){
+      const data = JSON.stringify(results, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'single_slit_results.json';
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    function clearResults(){
+      results = [];
+      updateResultsTable();
+    }
+
+    // ✅ EmailJS send (same params as your working pages)
+    async function sendResultsEmail(){
+      const userEmail = window.__currentUserEmail;
+
+      if (!userEmail) {
+        alert("You are not logged in (or email not confirmed). Please login on the main page first.");
+        return;
+      }
+      if (!results.length) {
+        alert("No results yet. Record at least one result first.");
+        return;
+      }
+
+      try{
+        sendBtn.disabled = true;
+        setEmailStatus("ok", "📩 Sending email...");
+
+        await waitForEmailJS();
+
+        const params = {
+          email: userEmail,
+          name: userEmail,
+          results: JSON.stringify(results, null, 2)
+        };
+
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params);
+
+        setEmailStatus("ok", `✅ Sent successfully to <b>${userEmail}</b>.`);
+      }catch(err){
+        console.error("❌ EmailJS error:", err);
+        const status = err?.status ?? "(no status)";
+        const text   = err?.text ?? err?.message ?? JSON.stringify(err);
+        setEmailStatus("err", `❌ Email failed. status: <b>${status}</b> — ${text}`);
+        alert("Email failed. Open console (F12) and check errors.");
+      }finally{
+        sendBtn.disabled = false;
+      }
+    }
+
+    /**************************************************************
+     * EVENTS + INIT
+     **************************************************************/
+    function onChange(){
+      updateLabels();
+      drawScreen();
+      if(!running) drawDiagramStep();
+    }
+
+    lambdaSlider.addEventListener("input", onChange);
+    aSlider.addEventListener("input", onChange);
+    LSlider.addEventListener("input", onChange);
+
+    startBtn.addEventListener("click", toggleExperiment);
+    restartBtn.addEventListener("click", restartExperiment);
+
+    recordBtn.addEventListener("click", recordResult);
+    saveBtn.addEventListener("click", saveResultsToFile);
+    sendBtn.addEventListener("click", sendResultsEmail);
+    clearBtn.addEventListener("click", clearResults);
+
+    // init
+    updateLabels();
+    drawScreen();
+    drawDiagramStep(); // one frame; animation starts only after Start
+  </script>
+</body>
+</html>

@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Physics Lab</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #141E30, #243B55);
+  color: white;
+  text-align: center;
+}
+
+h1 {
+  margin-top: 40px;
+  font-size: 42px;
+}
+
+.subtitle {
+  opacity: 0.8;
+  margin-bottom: 20px;
+}
+
+.login-box {
+  background: white;
+  color: black;
+  width: 360px;
+  padding: 30px;
+  margin: 30px auto;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+.input-group {
+  position: relative;
+  margin: 10px 0;
+}
+
+.input-group i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+}
+
+.input-group input {
+  width: 85%;
+  padding: 12px 12px 12px 40px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  display: block;
+  margin: 0 auto;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 10px;
+  background: #243B55;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button i { margin-right: 6px; }
+button:hover { background: #141E30; }
+
+.feedback {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  display: none;
+  font-size: 14px;
+}
+
+.success { background: #d4edda; color: #155724; }
+.error { background: #f8d7da; color: #721c24; }
+
+.cards {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 50px;
+  flex-wrap: wrap;
+}
+
+.card {
+  background: white;
+  color: black;
+  width: 220px;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.card:hover { transform: translateY(-10px); }
+.icon { font-size: 50px; }
+
+.logout {
+  background: crimson;
+  margin-top: 30px;
+}
+
+.guide {
+  margin-top: 20px;
+  padding: 30px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 15px;
+}
+
+#verifySection { margin-top: 10px; }
+.small-note { font-size: 14px; opacity: 0.85; margin: 10px 0; }
+</style>
+</head>
+
+<body>
+
+<h1>🔬 Physics Lab Simulations</h1>
+<p class="subtitle">Interactive IB Physics Experiments Platform</p>
+
+<div class="login-box" id="loginSection">
+  <h2>Login / Register</h2>
+
+  <div class="input-group">
+    <i class="fa fa-user"></i>
+    <input type="text" id="name" placeholder="Full Name" />
+  </div>
+
+  <div class="input-group">
+    <i class="fa fa-envelope"></i>
+    <input type="email" id="email" placeholder="School Email (@shirakatsy.am)" />
+  </div>
+
+  <div class="input-group">
+    <i class="fa fa-lock"></i>
+    <input type="password" id="password" placeholder="Password (min 6 chars)" />
+  </div>
+
+  <button onclick="register()"><i class="fa fa-user-plus"></i> Register</button>
+  <button onclick="login()"><i class="fa fa-sign-in-alt"></i> Login</button>
+  <button onclick="guestLogin()"><i class="fa fa-user"></i> Continue as Guest</button>
+
+  <!-- ✅ Email verification info (Firebase email verification via link) -->
+  <div id="verifySection" style="display:none;">
+    <p class="small-note">
+      Please confirm your email using the link we sent to your mailbox (check Spam too). After confirming, press <b>Login</b>.
+    </p>
+    <button onclick="resendVerification()"><i class="fa fa-paper-plane"></i> Resend confirmation email</button>
+  </div>
+
+  <div id="feedback" class="feedback"></div>
+</div>
+
+<div id="mainContent" style="display:none;">
+  <h2 id="welcomeMessage"></h2>
+
+  <div class="cards">
+    <div class="card" onclick="location.href='mechanics.html'">
+      <div class="icon">⚙️</div>
+      <h3>Mechanics</h3>
+      <p>Forces, Motion & Kinematics</p>
+    </div>
+
+    <div class="card" onclick="location.href='electricity.html'">
+      <div class="icon">⚡</div>
+      <h3>Electricity</h3>
+      <p>Circuits & Current</p>
+    </div>
+
+    <div class="card" onclick="location.href='waves.html'">
+      <div class="icon">🌊</div>
+      <h3>Waves</h3>
+      <p>Frequency & Oscillation</p>
+    </div>
+  </div>
+
+  <button onclick="sendFeedback()"><i class="fa fa-envelope"></i> Send Feedback</button>
+  <button class="logout" onclick="logout()"><i class="fa fa-sign-out-alt"></i> Logout</button>
+</div>
+
+<button onclick="toggleGuide()" style="margin-top:40px; padding:10px 20px; border-radius:10px; border:none; background:#ffffff20; color:white; cursor:pointer;">
+📘 Open User Guide
+</button>
+
+<div class="guide" id="guideSection" style="display:none;">
+  <h2>📘 User Guide</h2>
+  <p>1. Register using your official school email address.</p>
+  <p>2. Confirm your email, then login to access physics simulations.</p>
+  <p>3. Guest mode has limited functionality.</p>
+  <p>4. Select an experiment category.</p>
+  <p>5. Save results of experiment and send it to school email.</p>
+  <p>6. Logout when finished.</p>
+</div>
+
+<!-- ✅ Firebase (CDN, no downloads needed) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+  import {
+    getAuth,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    sendEmailVerification,
+    updateProfile,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+  import {
+    getFirestore,
+    doc,
+    setDoc,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+  // ===== Firebase config (from your console) =====
+  const firebaseConfig = {
+    apiKey: "AIzaSyCG_MCPpYlma9bqXkzRwt_3hsyxIL2jeUI",
+    authDomain: "physics-experiments-ib.firebaseapp.com",
+    projectId: "physics-experiments-ib",
+    storageBucket: "physics-experiments-ib.firebasestorage.app",
+    messagingSenderId: "283821061038",
+    appId: "1:283821061038:web:a8333e9406e4c3ead3ce3f"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // strict domain check (prevents @shirakatsy.am.fake etc.)
+  const schoolEmailPattern = /^[a-zA-Z0-9._%+-]+@shirakatsy\.am$/;
+
+  function showFeedback(message, type) {
+    const feedback = document.getElementById("feedback");
+    feedback.innerText = message;
+    feedback.className = "feedback " + type;
+    feedback.style.display = "block";
+  }
+
+  function clearFeedback() {
+    const feedback = document.getElementById("feedback");
+    feedback.style.display = "none";
+    feedback.innerText = "";
+    feedback.className = "feedback";
+  }
+
+  function showMain(name) {
+    document.getElementById("loginSection").style.display = "none";
+    document.getElementById("mainContent").style.display = "block";
+    document.getElementById("welcomeMessage").innerText = "Welcome, " + (name || "User");
+  }
+
+  function showLogin() {
+    document.getElementById("loginSection").style.display = "block";
+    document.getElementById("mainContent").style.display = "none";
+  }
+
+  function showVerifyBlock(show) {
+    document.getElementById("verifySection").style.display = show ? "block" : "none";
+  }
+
+  // IMPORTANT FIX:
+  // - do NOT let unverified users into mainContent
+  // - if user verified in another tab, reload user to refresh emailVerified
+  onAuthStateChanged(auth, async (user) => {
+    const guest = localStorage.getItem("guest") === "1";
+
+    // Guest mode
+    if (!user && guest) {
+      showVerifyBlock(false);
+      clearFeedback();
+      showMain("Guest");
+      return;
+    }
+
+    // Not logged in
+    if (!user) {
+      showVerifyBlock(false);
+      clearFeedback();
+      showLogin();
+      return;
+    }
+
+    // Logged in but not verified -> keep on login screen
+    if (!user.emailVerified) {
+      await user.reload(); // refresh verification state
+      if (!user.emailVerified) {
+        showLogin();
+        showVerifyBlock(true);
+        showFeedback(
+          "Please confirm your email using the link in your mailbox (check Spam too). After confirming, press Login.",
+          "error"
+        );
+        return;
+      }
+    }
+
+    // Verified -> allow access
+    localStorage.removeItem("guest");
+    showVerifyBlock(false);
+    clearFeedback();
+    showMain(user.displayName || user.email || "User");
+  });
+
+  // ====== REGISTER ======
+  window.register = async function () {
+    clearFeedback();
+
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    const password = document.getElementById("password").value;
+
+    if (!name || !email || !password) return showFeedback("Please fill in all fields.", "error");
+    if (!schoolEmailPattern.test(email)) return showFeedback("Only school emails (@shirakatsy.am) are allowed.", "error");
+    if (password.length < 6) return showFeedback("Password must be at least 6 characters.", "error");
+
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+      // set display name in Auth profile
+      await updateProfile(cred.user, { displayName: name });
+
+      // save user profile in Firestore ("database")
+      await setDoc(doc(db, "users", cred.user.uid), {
+        name,
+        email,
+        createdAt: serverTimestamp()
+      });
+
+      // send verification email (link)
+      await sendEmailVerification(cred.user);
+
+      showVerifyBlock(true);
+      showFeedback("Registered! Please confirm your email (check Spam too), then press Login.", "success");
+
+      // Sign out until verified (so they can't get auto-logged-in on refresh)
+      await signOut(auth);
+    } catch (e) {
+      console.error(e);
+      showFeedback(e?.message || "Registration failed.", "error");
+    }
+  };
+
+  // ====== LOGIN ======
+  window.login = async function () {
+    clearFeedback();
+
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    const password = document.getElementById("password").value;
+
+    if (!email || !password) return showFeedback("Enter email and password.", "error");
+
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+
+      // refresh verification state (important)
+      await cred.user.reload();
+
+      // Require confirmation
+      if (!cred.user.emailVerified) {
+        showVerifyBlock(true);
+        showFeedback("Please confirm your email first (check Inbox/Spam).", "error");
+        await signOut(auth);
+        return;
+      }
+
+      showVerifyBlock(false);
+      // onAuthStateChanged will show main
+    } catch (e) {
+      console.error(e);
+      showFeedback("Invalid email or password.", "error");
+    }
+  };
+
+  // ====== RESEND CONFIRMATION EMAIL ======
+  window.resendVerification = async function () {
+    clearFeedback();
+
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    const password = document.getElementById("password").value;
+
+    if (!email || !password) return showFeedback("Enter email + password, then resend.", "error");
+
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+
+      await sendEmailVerification(cred.user);
+      showFeedback("Confirmation email resent. Check Inbox/Spam.", "success");
+
+      await signOut(auth);
+    } catch (e) {
+      console.error(e);
+      showFeedback("Could not resend. Check email/password.", "error");
+    }
+  };
+
+  // ====== GUEST ======
+  window.guestLogin = function () {
+    localStorage.setItem("guest", "1");
+    showVerifyBlock(false);
+    clearFeedback();
+    showMain("Guest");
+  };
+
+  // ====== LOGOUT ======
+  window.logout = async function () {
+    localStorage.removeItem("guest");
+    try { await signOut(auth); } catch {}
+    location.reload();
+  };
+
+  window.toggleGuide = function () {
+    const guide = document.getElementById("guideSection");
+    guide.style.display = guide.style.display === "none" ? "block" : "none";
+  };
+
+  window.sendFeedback = function () {
+    window.location.href = "mailto:KhachaturyanVache@shirakatsy.am?subject=Physics Lab Feedback";
+  };
+</script>
+
+</body>
+</html>

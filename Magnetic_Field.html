@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Magnetic Field Experiments</title>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+  <!-- ✅ EmailJS SDK (Browser) -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <style>
+    body{
+      margin:0;
+      font-family:'Poppins',sans-serif;
+      background:linear-gradient(135deg,#8E0E00,#1F1C18);
+      color:white;
+      text-align:center;
+    }
+    h1{ margin:26px 10px 6px; font-size:38px; }
+    .subtitle{ opacity:.88; margin:0 auto 14px; max-width:1000px; padding:0 16px; line-height:1.5; }
+
+    .panel{
+      width:980px;
+      max-width:92%;
+      margin:16px auto;
+      background:#fff;
+      color:#111;
+      border-radius:20px;
+      padding:16px;
+      box-shadow:0 20px 40px rgba(0,0,0,0.45);
+      text-align:left;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap:14px;
+    }
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background:rgba(0,0,0,0.06);
+      border-radius:16px;
+      padding:14px;
+    }
+    .card h3{
+      margin:0 0 8px;
+      font-size:16px;
+    }
+    .row{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin:10px 0;
+    }
+    label{
+      font-weight:700;
+      min-width:190px;
+    }
+    input, select{
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,0.15);
+      font-size:16px;
+      width:190px;
+      outline:none;
+      background:rgba(0,0,0,0.03);
+      font-family:'Poppins',sans-serif;
+    }
+
+    button{
+      padding:12px 22px;
+      margin:6px 6px 0 0;
+      font-size:16px;
+      border:none;
+      border-radius:10px;
+      background:crimson;
+      color:white;
+      font-weight:800;
+      cursor:pointer;
+      transition:.25s;
+    }
+    button:hover{ background:darkred; }
+    .secondary{ background:#b11212; }
+    .secondary:hover{ background:#7d0b0b; }
+
+    .eqBox{
+      margin:0;
+      font-size:15px;
+      line-height:1.55;
+    }
+    .eqBox p{ margin:6px 0; }
+    .miniLegend{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      background:rgba(0,0,0,0.07);
+      font-weight:650;
+    }
+
+    #canvasWrap{
+      width:980px;
+      max-width:92%;
+      margin:16px auto;
+    }
+    canvas{
+      display:block;
+      width:100%;
+      height:560px;
+      border-radius:20px;
+      background:linear-gradient(to top,#f0f0f0,#c0c0c0);
+      box-shadow:0 15px 30px rgba(0,0,0,0.45);
+      border:none;
+    }
+
+    h2{ margin-top:18px; }
+
+    table{
+      width:92%;
+      margin:16px auto 24px;
+      border-collapse:collapse;
+      border-radius:15px;
+      overflow:hidden;
+      box-shadow:0 10px 20px rgba(0,0,0,0.45);
+      background:rgba(255,255,255,0.08);
+      color:white;
+    }
+    table,th,td{ border:1px solid rgba(255,255,255,0.25); }
+    th,td{ padding:12px; text-align:center; }
+    th{ background:rgba(255,255,255,0.15); }
+    tr:nth-child(even){ background:rgba(255,255,255,0.06); }
+
+    .back-button{
+      display:inline-block;
+      margin:12px 10px 28px;
+      padding:12px 22px;
+      background:crimson;
+      color:white;
+      border-radius:10px;
+      text-decoration:none;
+      font-weight:800;
+      transition:.25s;
+    }
+    .back-button:hover{ background:darkred; }
+
+    .pill{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(0,0,0,0.08);
+      font-weight:800;
+      margin-left:6px;
+    }
+
+    .notice{
+      max-width: 980px;
+      margin: 10px auto 0;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.10);
+      font-size: 14px;
+      opacity: 0.95;
+      text-align:center;
+    }
+
+    #emailStatus{
+      display:none;
+      max-width: 980px;
+      margin: 10px auto 0;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      border:1px solid rgba(255,255,255,0.2);
+      text-align:center;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>🧲 Magnetic Field Experiments</h1>
+  <p class="subtitle">
+    Clear IB-style magnetic field visualizations with correct direction symbols:
+    <span class="pill">⊙ out of page (toward you)</span>
+    <span class="pill">⊗ into page (away from you)</span>
+  </p>
+
+  <!-- ✅ Auth + email status -->
+  <div class="notice" id="authNotice">Loading user...</div>
+  <div class="notice" id="emailStatus"></div>
+
+  <div class="panel">
+    <div class="grid">
+      <div class="card">
+        <h3>Controls</h3>
+
+        <div class="row">
+          <label for="simType">Experiment type:</label>
+          <select id="simType" onchange="updateUIAndSim()">
+            <option value="wire">Straight Wire</option>
+            <option value="solenoid">Solenoid (approx.)</option>
+            <option value="loop">Current Loop (center field)</option>
+            <option value="force">Force on Wire (F = B I L sinθ)</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label for="current">Current \(I\) (A):</label>
+          <input type="number" id="current" step="0.1" min="0.1" max="10" value="5" oninput="updateUIAndSim()">
+        </div>
+
+        <div class="row" id="distanceRow">
+          <label for="distance">Distance \(r/z\) (m):</label>
+          <input type="number" id="distance" step="0.01" min="0.01" max="1" value="0.10" oninput="updateUIAndSim()">
+        </div>
+
+        <div class="row" id="dirRow">
+          <label for="dir">Direction:</label>
+          <select id="dir" onchange="updateUIAndSim()">
+            <option value="out">⊙ Out of page (toward you)</option>
+            <option value="in">⊗ Into page (away from you)</option>
+          </select>
+        </div>
+
+        <div class="row" id="thetaRow" style="display:none;">
+          <label for="theta">Angle \(\theta\) (deg):</label>
+          <input type="number" id="theta" step="1" min="0" max="180" value="90" oninput="updateUIAndSim()">
+        </div>
+
+        <div class="row">
+          <button onclick="recordResult()">Record Result</button>
+          <button class="secondary" onclick="saveResultsToFile()">Save Results</button>
+          <button id="sendBtn" onclick="sendResultsEmail()">Send to Email</button>
+        </div>
+
+        <div class="miniLegend" id="legendBox">
+          <div><b>Legend:</b></div>
+          <div>⊙ = current coming <b>out</b> of the screen (toward you)</div>
+          <div>⊗ = current going <b>into</b> the screen (away from you)</div>
+          <div>Magnetic field direction follows the <b>right-hand rule</b>.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Equations & Output</h3>
+
+        <div class="eqBox" id="eqBox">
+          <p id="eqTitle"><b>Straight wire:</b></p>
+          <p id="eqText">
+            \[
+              B = \frac{\mu_0 I}{2\pi r}
+            \]
+          </p>
+        </div>
+
+        <div class="miniLegend">
+          <div><b>Result:</b></div>
+          <div>Magnetic field \(B\): <b><span id="bField">—</span></b> T</div>
+          <div id="forceLine" style="display:none;">Force \(F\): <b><span id="forceOut">—</span></b> N</div>
+          <div style="opacity:.85; margin-top:8px;" id="calcLine">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="canvasWrap">
+    <canvas id="fieldCanvas" width="980" height="560"></canvas>
+  </div>
+
+  <h2>Experiment Results</h2>
+  <table id="resultsTable">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>I (A)</th>
+        <th>r/z (m)</th>
+        <th>Direction</th>
+        <th>B (T)</th>
+        <th>F (N)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div>
+    <a href="electricity.html" class="back-button">⬅ Back to Electricity</a>
+    <a href="index.html" class="back-button">⬅ Back to Main Page</a>
+  </div>
+
+  <!-- ✅ Firebase auth -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCG_MCPpYlma9bqXkzRwt_3hsyxIL2jeUI",
+      authDomain: "physics-experiments-ib.firebaseapp.com",
+      projectId: "physics-experiments-ib",
+      storageBucket: "physics-experiments-ib.firebasestorage.app",
+      messagingSenderId: "283821061038",
+      appId: "1:283821061038:web:a8333e9406e4c3ead3ce3f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    window.__currentUserEmail = null;
+    const authNotice = document.getElementById("authNotice");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.__currentUserEmail = null;
+        authNotice.innerHTML = 'Status: <b>Guest</b> (login to send results).';
+        return;
+      }
+
+      try { await user.reload(); } catch {}
+
+      if (!user.emailVerified) {
+        window.__currentUserEmail = null;
+        authNotice.innerHTML = 'Status: <b>Email not confirmed</b>. Please confirm your email in <b>index.html</b>.';
+        return;
+      }
+
+      window.__currentUserEmail = user.email || null;
+      authNotice.innerHTML = `Logged in as: <b>${window.__currentUserEmail}</b>`;
+    });
+  </script>
+
+  <script>
+    /* =========================
+       ✅ EmailJS CONFIG (MATCHES WORKING PAGE)
+       ========================= */
+    const EMAILJS_PUBLIC_KEY  = "OF8tw55BMFQQIG8OM";
+    const EMAILJS_SERVICE_ID  = "service_xiyprvp";
+    const EMAILJS_TEMPLATE_ID = "template_rk45mwm";
+
+    function setEmailStatus(type, msg){
+      const box = document.getElementById("emailStatus");
+      box.style.display = "block";
+      box.innerHTML = msg;
+      box.style.border = "1px solid rgba(255,255,255,0.25)";
+      box.style.background = (type === "ok")
+        ? "rgba(76,175,80,0.18)"
+        : "rgba(255,76,76,0.18)";
+    }
+
+    function waitForEmailJS(timeoutMs = 8000){
+      return new Promise((resolve, reject) => {
+        const start = Date.now();
+        (function check(){
+          if (window.emailjs && typeof window.emailjs.send === "function") return resolve();
+          if (Date.now() - start > timeoutMs) return reject(new Error("EmailJS not loaded (timeout)"));
+          setTimeout(check, 50);
+        })();
+      });
+    }
+
+    (async function initEmailJS(){
+      try{
+        await waitForEmailJS();
+        emailjs.init(EMAILJS_PUBLIC_KEY); // ✅ same as working page
+        console.log("✅ EmailJS initialized");
+      }catch(e){
+        console.error("❌ EmailJS init failed:", e);
+        setEmailStatus("err", "❌ EmailJS failed to load. Check internet / blocked CDN.");
+      }
+    })();
+
+    // =========================
+    // Simulation variables + logic
+    // =========================
+    const canvas = document.getElementById("fieldCanvas");
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width;
+    const H = canvas.height;
+
+    const mu0 = 4 * Math.PI * 1e-7;
+
+    const simTypeSelect = document.getElementById("simType");
+    const currentInput = document.getElementById("current");
+    const distanceInput = document.getElementById("distance");
+    const thetaInput = document.getElementById("theta");
+    const dirSelect = document.getElementById("dir");
+
+    const distanceRow = document.getElementById("distanceRow");
+    const thetaRow = document.getElementById("thetaRow");
+    const dirRow = document.getElementById("dirRow");
+
+    const bFieldOut = document.getElementById("bField");
+    const forceLine = document.getElementById("forceLine");
+    const forceOut = document.getElementById("forceOut");
+    const calcLine = document.getElementById("calcLine");
+
+    const eqTitle = document.getElementById("eqTitle");
+    const eqText  = document.getElementById("eqText");
+
+    let results = [];
+
+    function clamp(v,min,max){ return Math.min(max, Math.max(min,v)); }
+
+    function getState(){
+      const type = simTypeSelect.value;
+      const I = Math.max(0.1, parseFloat(currentInput.value) || 0.1);
+      const d = Math.max(0.01, parseFloat(distanceInput.value) || 0.01);
+      const theta = clamp(parseFloat(thetaInput.value) || 90, 0, 180);
+      const dir = dirSelect.value; // "out" or "in"
+      return { type, I, d, theta, dir };
+    }
+
+    function updateUIAndSim(){
+      const s = getState();
+
+      thetaRow.style.display = (s.type === "force") ? "flex" : "none";
+      forceLine.style.display = (s.type === "force") ? "block" : "none";
+
+      dirRow.style.display = (s.type === "force") ? "none" : "flex";
+      distanceRow.style.display = "flex";
+
+      if(s.type === "wire"){
+        eqTitle.innerHTML = "<b>Straight wire:</b>";
+        eqText.innerHTML = `
+          \\[
+            B = \\frac{\\mu_0 I}{2\\pi r}
+          \\]
+          <p style="margin:6px 0; opacity:.85;">
+            Direction: circles around the wire (right-hand rule).
+          </p>
+        `;
+      } else if(s.type === "solenoid"){
+        eqTitle.innerHTML = "<b>Solenoid (ideal approx.):</b>";
+        eqText.innerHTML = `
+          \\[
+            B \\approx \\mu_0 n I
+          \\]
+          <p style="margin:6px 0; opacity:.85;">
+            \(n\) = turns per meter (here fixed for visualization).
+          </p>
+        `;
+      } else if(s.type === "loop"){
+        eqTitle.innerHTML = "<b>Current loop (on axis):</b>";
+        eqText.innerHTML = `
+          \\[
+            B = \\frac{\\mu_0 I R^2}{2\\,(R^2 + z^2)^{3/2}}
+          \\]
+          <p style="margin:6px 0; opacity:.85;">
+            Here \(R\) is fixed (visual radius), \(z\) is your distance input.
+          </p>
+        `;
+      } else {
+        eqTitle.innerHTML = "<b>Force on a wire:</b>";
+        eqText.innerHTML = `
+          \\[
+            F = B I L \\sin(\\theta)
+          \\]
+          <p style="margin:6px 0; opacity:.85;">
+            Here \(B\) and \(L\) are fixed constants in this demo.
+          </p>
+        `;
+      }
+
+      calculateAndDisplay();
+      if(window.MathJax) MathJax.typesetPromise();
+    }
+
+    function calculateAndDisplay(){
+      const s = getState();
+      let B = 0;
+      let F = 0;
+
+      if(s.type === "wire"){
+        B = (mu0 * s.I) / (2 * Math.PI * s.d);
+        calcLine.textContent = `B = (μ0·I)/(2π·r) = (${mu0.toExponential(2)} · ${s.I.toFixed(2)}) / (2π · ${s.d.toFixed(2)})`;
+      } else if(s.type === "solenoid"){
+        const n = 120;
+        B = mu0 * n * s.I;
+        calcLine.textContent = `B ≈ μ0·n·I = (${mu0.toExponential(2)} · ${n} · ${s.I.toFixed(2)})`;
+      } else if(s.type === "loop"){
+        const R = 0.08;
+        const z = s.d;
+        B = (mu0 * s.I * R * R) / (2 * Math.pow(R*R + z*z, 1.5));
+        calcLine.textContent = `B = μ0 I R² / (2 (R²+z²)^(3/2)), R=${R.toFixed(2)}m, z=${z.toFixed(2)}m`;
+      } else {
+        B = 0.01;
+        const L = 0.20;
+        const thetaRad = s.theta * Math.PI/180;
+        F = B * s.I * L * Math.sin(thetaRad);
+        calcLine.textContent = `F = B·I·L·sinθ = ${B.toFixed(4)}·${s.I.toFixed(2)}·${L.toFixed(2)}·sin(${s.theta}°)`;
+        forceOut.textContent = F.toFixed(4);
+      }
+
+      bFieldOut.textContent = B.toExponential(2);
+      return { B, F };
+    }
+
+    // ---------- Drawing helpers ----------
+    function drawArrow(x, y, angle, color="#0b2cff"){
+      const len = 14;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 2;
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(len, 0);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(len, 0);
+      ctx.lineTo(len - 5, 3);
+      ctx.lineTo(len - 5, -3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawDotCross(x,y,mode){
+      ctx.save();
+      ctx.translate(x,y);
+
+      ctx.strokeStyle = "#111";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0,0,18,0,2*Math.PI);
+      ctx.stroke();
+
+      if(mode === "out"){
+        ctx.fillStyle = "#111";
+        ctx.beginPath();
+        ctx.arc(0,0,6,0,2*Math.PI);
+        ctx.fill();
+
+        ctx.fillStyle = "#0b7a2a";
+        ctx.font = "bold 16px Poppins";
+        ctx.fillText("⊙  out", -26, 40);
+      } else {
+        ctx.strokeStyle = "#111";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-8,-8); ctx.lineTo(8,8);
+        ctx.moveTo(8,-8); ctx.lineTo(-8,8);
+        ctx.stroke();
+
+        ctx.fillStyle = "#0b7a2a";
+        ctx.font = "bold 16px Poppins";
+        ctx.fillText("⊗  in", -18, 40);
+      }
+
+      ctx.restore();
+    }
+
+    function drawStraightWire(t){
+      const s = getState();
+      ctx.clearRect(0,0,W,H);
+
+      const cx = W/2, cy = H/2;
+
+      ctx.strokeStyle = "#111";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(cx, 40);
+      ctx.lineTo(cx, H-40);
+      ctx.stroke();
+
+      drawDotCross(cx, cy, s.dir);
+
+      const maxR = 260;
+      const spacing = 40;
+      const sign = (s.dir === "out") ? +1 : -1;
+
+      for(let r=spacing; r<=maxR; r+=spacing){
+        ctx.strokeStyle = `rgba(0,0,255,${0.20 + 0.60*(1-r/maxR)})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2*Math.PI);
+        ctx.stroke();
+
+        const n = 14;
+        for(let i=0;i<n;i++){
+          const base = (i/n)*2*Math.PI;
+          const ang = base + sign*(t*0.0006)*(20/r);
+          const x = cx + r*Math.cos(ang);
+          const y = cy + r*Math.sin(ang);
+          const tangent = ang + sign*(Math.PI/2);
+          drawArrow(x, y, tangent, "#0b2cff");
+        }
+      }
+
+      ctx.fillStyle = "rgba(0,0,0,0.75)";
+      ctx.font = "bold 14px Poppins";
+      ctx.fillText("Magnetic field circles around wire (right-hand rule)", 60, 52);
+      ctx.fillText("⊙ out => CCW   |   ⊗ in => CW", 60, 76);
+    }
+
+    function drawSolenoid(t){
+      const s = getState();
+      ctx.clearRect(0,0,W,H);
+
+      const cx = W/2, cy = H/2;
+      const topY = cy - 130;
+      const botY = cy + 130;
+      const w = 300;
+      const turns = 11;
+      const dy = (botY-topY)/turns;
+
+      ctx.strokeStyle = "#111";
+      ctx.lineWidth = 2;
+      for(let i=0;i<=turns;i++){
+        const y = topY + i*dy;
+        ctx.beginPath();
+        ctx.moveTo(cx - w/2, y);
+        ctx.lineTo(cx + w/2, y);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = "rgba(0,0,255,0.75)";
+      ctx.lineWidth = 3;
+      for(let i=0;i<7;i++){
+        const y = topY + (i+1)*(botY-topY)/8;
+        ctx.beginPath();
+        ctx.moveTo(cx - w/2 + 40, y);
+        ctx.lineTo(cx + w/2 - 40, y);
+        ctx.stroke();
+
+        const phase = (t*0.0008*s.I) % 1;
+        const x = cx - w/2 + 40 + phase*(w-80);
+        drawArrow(x, y, 0, "#0b2cff");
+      }
+
+      ctx.fillStyle = "rgba(0,0,0,0.75)";
+      ctx.font = "bold 14px Poppins";
+      ctx.fillText("Solenoid (ideal): B inside is nearly uniform", 60, 52);
+
+      ctx.font = "bold 13px Poppins";
+      ctx.fillText("We show a 3D hint:", 60, 78);
+      ctx.fillText("⊙ means current comes toward you, ⊗ means away", 60, 98);
+
+      drawDotCross(cx - w/2 - 70, cy - 30, "out");
+      drawDotCross(cx - w/2 - 70, cy + 90, "in");
+
+      ctx.strokeStyle = "rgba(0,0,0,0.25)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cx - w/2, topY, w, botY-topY);
+    }
+
+    function drawLoop(t){
+      const s = getState();
+      ctx.clearRect(0,0,W,H);
+
+      const cx = W/2, cy = H/2;
+      const R = 110;
+
+      ctx.strokeStyle = "#111";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, 2*Math.PI);
+      ctx.stroke();
+
+      const sign = (s.dir === "out") ? +1 : -1;
+
+      for(let k=0;k<6;k++){
+        const a = (k/6)*2*Math.PI + sign*(t*0.0005);
+        const x = cx + R*Math.cos(a);
+        const y = cy + R*Math.sin(a);
+        const tangent = a + sign*(Math.PI/2);
+        drawArrow(x, y, tangent, "#0b7a2a");
+      }
+
+      const centerB = (sign === +1) ? "out" : "in";
+      drawDotCross(cx, cy, centerB);
+
+      ctx.strokeStyle = "rgba(0,0,255,0.35)";
+      ctx.lineWidth = 2;
+      for(let i=1;i<=5;i++){
+        const off = i*32;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - R);
+        ctx.bezierCurveTo(cx - off, cy - off*1.4, cx - off, cy + off*1.4, cx, cy + R);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy + R);
+        ctx.bezierCurveTo(cx + off, cy + off*1.4, cx + off, cy - off*1.4, cx, cy - R);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "rgba(0,0,0,0.75)";
+      ctx.font = "bold 14px Poppins";
+      ctx.fillText("Loop: arrows show current around the loop; symbol at center shows B direction", 60, 52);
+    }
+
+    function drawForce(t){
+      const s = getState();
+      ctx.clearRect(0,0,W,H);
+
+      const cx = W/2, cy = H/2;
+
+      ctx.strokeStyle = "rgba(130,0,180,0.55)";
+      ctx.lineWidth = 2;
+      for(let x=cx-240; x<=cx+240; x+=50){
+        ctx.beginPath();
+        ctx.moveTo(x, cy-150);
+        ctx.lineTo(x, cy+150);
+        ctx.stroke();
+        drawArrow(x, cy-10, -Math.PI/2, "rgba(130,0,180,0.95)");
+      }
+      ctx.fillStyle = "rgba(130,0,180,0.95)";
+      ctx.font = "bold 16px Poppins";
+      ctx.fillText("B ↑ (fixed)", cx-320, cy);
+
+      const wireLen = 360;
+      ctx.save();
+      ctx.translate(cx, cy);
+      const rot = (s.theta - 90) * Math.PI/180;
+      ctx.rotate(rot);
+
+      ctx.strokeStyle = "#111";
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(-wireLen/2, 0);
+      ctx.lineTo(wireLen/2, 0);
+      ctx.stroke();
+
+      ctx.fillStyle = "#0b7a2a";
+      ctx.font = "bold 16px Poppins";
+      ctx.fillText("I", -wireLen/2 - 30, -10);
+      drawArrow(wireLen/2 - 30, 0, 0, "#0b7a2a");
+      ctx.restore();
+
+      const { F } = calculateAndDisplay();
+
+      const arrowLen = Math.min(160, Math.abs(F) * 12000);
+      ctx.strokeStyle = "rgba(210,0,0,0.95)";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx, cy - arrowLen);
+      ctx.stroke();
+      drawArrow(cx, cy - arrowLen, -Math.PI/2, "rgba(210,0,0,0.95)");
+
+      ctx.fillStyle = "rgba(210,0,0,0.95)";
+      ctx.font = "bold 16px Poppins";
+      ctx.fillText("F (visual)", cx + 12, cy - arrowLen - 6);
+
+      ctx.fillStyle = "rgba(0,0,0,0.75)";
+      ctx.font = "bold 14px Poppins";
+      ctx.fillText("Force demo: B fixed upward; wire rotated by θ; F magnitude shown", 60, 52);
+    }
+
+    // ---------- Animation ----------
+    let lastT = null;
+    function animate(t){
+      if(!lastT) lastT = t;
+      lastT = t;
+
+      const s = getState();
+      if(s.type === "wire") drawStraightWire(t);
+      else if(s.type === "solenoid") drawSolenoid(t);
+      else if(s.type === "loop") drawLoop(t);
+      else drawForce(t);
+
+      requestAnimationFrame(animate);
+    }
+
+    // ---------- Results ----------
+    function recordResult(){
+      const s = getState();
+      const { B, F } = calculateAndDisplay();
+
+      results.push({
+        type: s.type,
+        I: s.I.toFixed(2),
+        d: s.d.toFixed(2),
+        dir: (s.type==="force") ? "—" : (s.dir==="out" ? "⊙ out" : "⊗ in"),
+        B: B.toExponential(2),
+        F: (s.type==="force") ? F.toFixed(4) : "N/A"
+      });
+
+      updateResultsTable();
+    }
+
+    function updateResultsTable(){
+      const tbody = document.querySelector("#resultsTable tbody");
+      tbody.innerHTML = "";
+      results.forEach(r=>{
+        tbody.innerHTML += `
+          <tr>
+            <td>${r.type}</td>
+            <td>${r.I}</td>
+            <td>${r.d}</td>
+            <td>${r.dir}</td>
+            <td>${r.B}</td>
+            <td>${r.F}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function saveResultsToFile(){
+      const raw = JSON.stringify(results, null, 2);
+      const blob = new Blob([raw], {type:'text/plain'});
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "magnetic_field_results.txt";
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    // ✅ FIXED: send EXACT SAME template params as working page
+    async function sendResultsEmail(){
+      const userEmail = window.__currentUserEmail;
+      const sendBtn = document.getElementById("sendBtn");
+
+      if (!userEmail) {
+        alert("You are not logged in (or email not confirmed). Please login on the main page first.");
+        return;
+      }
+      if (!results.length) {
+        alert("No results yet. Record at least one result first.");
+        return;
+      }
+
+      try{
+        sendBtn.disabled = true;
+        setEmailStatus("ok", "📩 Sending email...");
+
+        await waitForEmailJS(); // ensure loaded
+
+        const params = {
+          email: userEmail,
+          name: userEmail,
+          results: JSON.stringify(results, null, 2)
+        };
+
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params);
+
+        setEmailStatus("ok", `✅ Sent successfully to <b>${userEmail}</b>.`);
+      }catch(err){
+        console.error("❌ EmailJS error:", err);
+        const status = err?.status ?? "(no status)";
+        const text   = err?.text ?? err?.message ?? JSON.stringify(err);
+        setEmailStatus("err", `❌ Email failed. status: <b>${status}</b> — ${text}`);
+        alert("Email failed. Open console (F12) and check errors.");
+      }finally{
+        sendBtn.disabled = false;
+      }
+    }
+
+    // init
+    updateUIAndSim();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

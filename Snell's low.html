@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snell's Law — Refraction Simulator</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+  <!-- ✅ EmailJS SDK (Browser) -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <style>
+    :root{
+      --bg1:#00c6ff;
+      --bg2:#0072ff;
+
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#475569;
+
+      --accent:#0072ff;
+      --accent2:#005bb5;
+
+      --shadow:0 18px 45px rgba(0,0,0,.35);
+      --radius:22px;
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      font-family:'Poppins', sans-serif;
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      color:white;
+      text-align:center;
+      padding: 28px 18px 40px;
+    }
+
+    h1{
+      margin: 10px 0 6px;
+      font-size: clamp(26px, 3.2vw, 40px);
+      letter-spacing: .2px;
+    }
+
+    .subtitle{
+      margin: 0 0 12px;
+      opacity:.85;
+      font-weight:300;
+    }
+
+    /* ✅ auth + email status */
+    .notice{
+      max-width:1100px;
+      margin: 10px auto 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.22);
+      font-size: 14px;
+      opacity: 0.95;
+      text-align:center;
+    }
+    #emailStatus{
+      display:none;
+      max-width:1100px;
+      margin: 0 auto 16px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      border: 1px solid rgba(255,255,255,0.22);
+      text-align:center;
+      background: rgba(255,255,255,0.12);
+    }
+
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      display:grid;
+      grid-template-columns: 390px 1fr;
+      gap: 18px;
+      align-items:start;
+    }
+
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: var(--card);
+      color: var(--ink);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      text-align:left;
+    }
+
+    .card h2{
+      margin: 0 0 10px;
+      font-size: 18px;
+      letter-spacing:.2px;
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .control{
+      background: rgba(2, 6, 23, 0.03);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .control label{
+      display:flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      gap: 12px;
+    }
+
+    .control label strong{
+      color: var(--ink);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--accent);
+    }
+
+    select{
+      width:100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(15,23,42,.18);
+      outline:none;
+      font-family: inherit;
+      background:white;
+    }
+
+    .output{
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(15,23,42,.10);
+      background: rgba(2, 6, 23, 0.03);
+      font-size: 14px;
+      color: var(--ink);
+      line-height: 1.4;
+    }
+
+    .pill{
+      display:inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(0,114,255,.10);
+      color: var(--accent2);
+      margin-right: 8px;
+    }
+
+    .warn{
+      background: rgba(220,38,38,.10);
+      color: #b91c1c;
+    }
+
+    .canvasCard{
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: 0 18px 45px rgba(0,0,0,.20);
+      backdrop-filter: blur(6px);
+    }
+
+    canvas{
+      width: 100%;
+      height: auto;
+      display:block;
+      border-radius: 18px;
+      background: rgba(255,255,255,.85);
+      border: 1px solid rgba(0,0,0,.08);
+    }
+
+    .btnRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      justify-content:flex-start;
+      margin-top: 12px;
+    }
+
+    button{
+      border:none;
+      cursor:pointer;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-family: inherit;
+      font-weight: 700;
+      transition: .2s;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+    }
+
+    .primary{
+      background: var(--accent);
+      color:white;
+      box-shadow: 0 10px 22px rgba(0,0,0,.18);
+    }
+    .primary:hover{ transform: translateY(-2px); background: var(--accent2); }
+
+    .ghost{
+      background: rgba(15,23,42,.06);
+      color: var(--ink);
+      border: 1px solid rgba(15,23,42,.12);
+    }
+    .ghost:hover{ transform: translateY(-2px); background: rgba(15,23,42,.10); }
+
+    .danger{
+      background: rgba(220,38,38,.10);
+      color:#b91c1c;
+      border: 1px solid rgba(185,28,28,.20);
+    }
+    .danger:hover{ transform: translateY(-2px); background: rgba(220,38,38,.16); }
+
+    .tableCard{
+      margin-top: 18px;
+    }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      overflow:hidden;
+      border-radius: 16px;
+      border: 1px solid rgba(15,23,42,.10);
+    }
+
+    thead th{
+      text-align:left;
+      font-size: 12px;
+      letter-spacing: .2px;
+      color: var(--muted);
+      background: rgba(2,6,23,.04);
+      padding: 10px 12px;
+    }
+
+    tbody td{
+      padding: 10px 12px;
+      border-top: 1px solid rgba(15,23,42,.08);
+      font-size: 14px;
+    }
+
+    tbody tr:hover{
+      background: rgba(0,114,255,.06);
+    }
+
+    .footerLinks{
+      margin-top: 18px;
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content:center;
+    }
+
+    .footerLinks a{
+      background: rgba(255,255,255,.16);
+      border: 1px solid rgba(255,255,255,.22);
+      color:white;
+      padding: 10px 14px;
+      border-radius: 12px;
+      text-decoration:none;
+      font-weight:700;
+      transition:.2s;
+    }
+    .footerLinks a:hover{
+      transform: translateY(-2px);
+      background: rgba(255,255,255,.22);
+    }
+
+    .tiny{
+      font-size: 12px;
+      opacity: .8;
+      margin-top: 10px;
+      text-align:center;
+      color: rgba(255,255,255,.85);
+    }
+  </style>
+</head>
+
+<body>
+  <h1>🌈 Snell’s Law Simulator</h1>
+  <p class="subtitle">Refraction, angles, and total internal reflection — visually clear.</p>
+
+  <!-- ✅ Auth + email status -->
+  <div class="notice" id="authNotice">Loading user...</div>
+  <div class="notice" id="emailStatus"></div>
+
+  <div class="wrap">
+    <!-- Left: Controls -->
+    <div class="card">
+      <h2>Controls</h2>
+
+      <div class="row">
+        <div class="control">
+          <label for="incidence">
+            <span>Angle of incidence</span>
+            <strong><span id="incidenceVal">30</span>°</strong>
+          </label>
+          <input type="range" id="incidence" min="0" max="89" value="30" />
+        </div>
+
+        <div class="control">
+          <label for="medium1"><span>Medium 1 (top)</span><strong>n₁</strong></label>
+          <select id="medium1">
+            <option value="1.0">Air (n=1.00)</option>
+            <option value="1.33">Water (n=1.33)</option>
+            <option value="1.5">Glass (n=1.50)</option>
+          </select>
+        </div>
+
+        <div class="control">
+          <label for="medium2"><span>Medium 2 (bottom)</span><strong>n₂</strong></label>
+          <select id="medium2">
+            <option value="1.0">Air (n=1.00)</option>
+            <option value="1.33" selected>Water (n=1.33)</option>
+            <option value="1.5">Glass (n=1.50)</option>
+          </select>
+        </div>
+
+        <div class="output" id="outputBox">
+          <div style="margin-bottom:8px;">
+            <span class="pill" id="statusPill">Snell</span>
+            <span id="snellLine">n₁ sin(i) = n₂ sin(r)</span>
+          </div>
+          <div id="resultLine">—</div>
+        </div>
+
+        <div class="btnRow">
+          <button class="primary" id="recordBtn">🧾 Record</button>
+          <button class="ghost" id="saveBtn">💾 Save</button>
+          <button class="ghost" id="sendBtn">✉️ Send to Email</button>
+          <button class="danger" id="clearBtn">🧹 Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Canvas -->
+    <div class="canvasCard">
+      <canvas id="simCanvas" width="900" height="620"></canvas>
+      <div class="tiny">Tip: watch how angle changes when you swap n₁ and n₂.</div>
+    </div>
+  </div>
+
+  <!-- Results Table -->
+  <div class="card tableCard" style="max-width:1100px; margin:18px auto 0;">
+    <h2 style="margin-bottom:12px;">Simulation Results</h2>
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th>Incidence i (°)</th>
+          <th>n₁</th>
+          <th>n₂</th>
+          <th>Refraction r (°)</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="footerLinks">
+    <a href="waves.html">⬅ Back to Waves</a>
+    <a href="index.html">🏠 Main Page</a>
+  </div>
+
+  <!-- ✅ Firebase auth (same as your working pages) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCG_MCPpYlma9bqXkzRwt_3hsyxIL2jeUI",
+      authDomain: "physics-experiments-ib.firebaseapp.com",
+      projectId: "physics-experiments-ib",
+      storageBucket: "physics-experiments-ib.firebasestorage.app",
+      messagingSenderId: "283821061038",
+      appId: "1:283821061038:web:a8333e9406e4c3ead3ce3f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    window.__currentUserEmail = null;
+    const authNotice = document.getElementById("authNotice");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.__currentUserEmail = null;
+        authNotice.innerHTML = 'Status: <b>Guest</b> (login to send results).';
+        return;
+      }
+
+      try { await user.reload(); } catch {}
+
+      if (!user.emailVerified) {
+        window.__currentUserEmail = null;
+        authNotice.innerHTML = 'Status: <b>Email not confirmed</b>. Confirm email in <b>index.html</b> then come back.';
+        return;
+      }
+
+      window.__currentUserEmail = user.email || null;
+      authNotice.innerHTML = `Logged in as: <b>${window.__currentUserEmail}</b>`;
+    });
+  </script>
+
+  <script>
+    /* =========================
+       ✅ EmailJS CONFIG (same as working pages)
+       ========================= */
+    const EMAILJS_PUBLIC_KEY  = "OF8tw55BMFQQIG8OM";
+    const EMAILJS_SERVICE_ID  = "service_xiyprvp";
+    const EMAILJS_TEMPLATE_ID = "template_rk45mwm";
+
+    function setEmailStatus(type, msg){
+      const box = document.getElementById("emailStatus");
+      box.style.display = "block";
+      box.innerHTML = msg;
+      box.style.border = "1px solid rgba(255,255,255,0.22)";
+      box.style.background = (type === "ok")
+        ? "rgba(76,175,80,0.20)"
+        : "rgba(255,76,76,0.20)";
+    }
+
+    function waitForEmailJS(timeoutMs = 8000){
+      return new Promise((resolve, reject) => {
+        const start = Date.now();
+        (function check(){
+          if (window.emailjs && typeof window.emailjs.send === "function") return resolve();
+          if (Date.now() - start > timeoutMs) return reject(new Error("EmailJS not loaded (timeout)"));
+          setTimeout(check, 50);
+        })();
+      });
+    }
+
+    (async function initEmailJS(){
+      try{
+        await waitForEmailJS();
+        emailjs.init(EMAILJS_PUBLIC_KEY);
+        console.log("✅ EmailJS initialized");
+      }catch(e){
+        console.error("❌ EmailJS init failed:", e);
+        setEmailStatus("err", "❌ EmailJS failed to load. Check internet / blocked CDN.");
+      }
+    })();
+
+    const incidenceSlider = document.getElementById('incidence');
+    const incidenceVal = document.getElementById('incidenceVal');
+    const medium1Select = document.getElementById('medium1');
+    const medium2Select = document.getElementById('medium2');
+
+    const snellLine = document.getElementById('snellLine');
+    const resultLine = document.getElementById('resultLine');
+    const statusPill = document.getElementById('statusPill');
+
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const recordBtn = document.getElementById('recordBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const sendBtn = document.getElementById('sendBtn');
+
+    const width = canvas.width;
+    const height = canvas.height;
+    const boundaryY = Math.floor(height * 0.52);
+
+    let results = [];
+
+    function rad(deg){ return deg * Math.PI / 180; }
+    function deg(r){ return r * 180 / Math.PI; }
+    function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+
+    function drawScene(n1, n2){
+      ctx.clearRect(0,0,width,height);
+
+      ctx.fillStyle = "rgba(55, 145, 255, 0.18)";
+      ctx.fillRect(0,0,width,boundaryY);
+
+      ctx.fillStyle = "rgba(34, 197, 94, 0.14)";
+      ctx.fillRect(0,boundaryY,width,height-boundaryY);
+
+      ctx.strokeStyle = "rgba(15,23,42,.35)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0,boundaryY);
+      ctx.lineTo(width,boundaryY);
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(15,23,42,.85)";
+      ctx.font = "600 16px Poppins, Arial";
+      ctx.fillText(`Medium 1 (n₁ = ${n1.toFixed(2)})`, 18, 28);
+      ctx.fillText(`Medium 2 (n₂ = ${n2.toFixed(2)})`, 18, boundaryY + 28);
+
+      const xN = Math.floor(width * 0.52);
+      ctx.save();
+      ctx.setLineDash([8,6]);
+      ctx.strokeStyle = "rgba(15,23,42,.45)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(xN, 40);
+      ctx.lineTo(xN, height - 40);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = "rgba(15,23,42,.55)";
+      ctx.font = "500 13px Poppins, Arial";
+      ctx.fillText("normal", xN + 10, 60);
+    }
+
+    function drawRay(x0, y0, x1, y1, style){
+      ctx.strokeStyle = style;
+      ctx.lineWidth = 4;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(x0,y0);
+      ctx.lineTo(x1,y1);
+      ctx.stroke();
+    }
+
+    function drawArc(cx, cy, r, a0, a1, label){
+      ctx.save();
+      ctx.strokeStyle = "rgba(15,23,42,.55)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, a0, a1);
+      ctx.stroke();
+
+      const am = (a0 + a1) / 2;
+      const lx = cx + (r + 14) * Math.cos(am);
+      const ly = cy + (r + 14) * Math.sin(am);
+
+      ctx.fillStyle = "rgba(15,23,42,.85)";
+      ctx.font = "700 14px Poppins, Arial";
+      ctx.fillText(label, lx, ly);
+      ctx.restore();
+    }
+
+    function simulate(){
+      const iDeg = parseFloat(incidenceSlider.value);
+      const iRad = rad(iDeg);
+
+      const n1 = parseFloat(medium1Select.value);
+      const n2 = parseFloat(medium2Select.value);
+
+      drawScene(n1, n2);
+
+      const xIntersect = Math.floor(width * 0.52);
+      const yIntersect = boundaryY;
+
+      const L = 340;
+
+      const dx_i = -Math.sin(iRad);
+      const dy_i = -Math.cos(iRad);
+
+      const xStart = xIntersect + L * dx_i;
+      const yStart = yIntersect + L * dy_i;
+
+      drawRay(xStart, yStart, xIntersect, yIntersect, "rgba(0,114,255,.95)");
+
+      const sinr = (n1 / n2) * Math.sin(iRad);
+
+      let isTIR = false;
+      let rRad = 0;
+
+      if (Math.abs(sinr) > 1){
+        isTIR = true;
+      } else {
+        rRad = Math.asin(clamp(sinr, -1, 1));
+      }
+
+      const arcR = 58;
+      const angIncidentFromIntersect = Math.atan2(yStart - yIntersect, xStart - xIntersect);
+      const angNormalUp = -Math.PI / 2;
+      drawArc(xIntersect, yIntersect, arcR, angNormalUp, angIncidentFromIntersect, "i");
+
+      if (isTIR){
+        const dx_rfl = +Math.sin(iRad);
+        const dy_rfl = -Math.cos(iRad);
+
+        const xReflEnd = xIntersect + L * dx_rfl;
+        const yReflEnd = yIntersect + L * dy_rfl;
+
+        drawRay(xIntersect, yIntersect, xReflEnd, yReflEnd, "rgba(220,38,38,.95)");
+
+        const angReflect = Math.atan2(yReflEnd - yIntersect, xReflEnd - xIntersect);
+        drawArc(xIntersect, yIntersect, arcR + 18, angNormalUp, angReflect, "i");
+
+        statusPill.classList.add("warn");
+        statusPill.textContent = "TIR";
+        snellLine.textContent = "n₁ sin(i) = n₂ sin(r)";
+        resultLine.innerHTML = `<span class="pill warn">TIR</span> Total internal reflection (no refraction).`;
+      } else {
+        const rDeg = deg(rRad);
+
+        const dx_t = +Math.sin(rRad);
+        const dy_t = +Math.cos(rRad);
+
+        const xRefractEnd = xIntersect + L * dx_t;
+        const yRefractEnd = yIntersect + L * dy_t;
+
+        drawRay(xIntersect, yIntersect, xRefractEnd, yRefractEnd, "rgba(220,38,38,.95)");
+
+        const angNormalDown = Math.PI / 2;
+        const angRefract = Math.atan2(yRefractEnd - yIntersect, xRefractEnd - xIntersect);
+        drawArc(xIntersect, yIntersect, arcR, angNormalDown, angRefract, "r");
+
+        statusPill.classList.remove("warn");
+        statusPill.textContent = "Result";
+        snellLine.textContent = "n₁ sin(i) = n₂ sin(r)";
+        resultLine.innerHTML = `<span class="pill">r</span> <b>${rDeg.toFixed(1)}°</b>`;
+      }
+
+      ctx.fillStyle = "rgba(15,23,42,.75)";
+      ctx.beginPath();
+      ctx.arc(xIntersect, yIntersect, 4.5, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(15,23,42,.65)";
+      ctx.font = "500 13px Poppins, Arial";
+      ctx.fillText("incident", xStart + 8, yStart - 8);
+      ctx.fillText(isTIR ? "reflected" : "refracted", xIntersect + 12, yIntersect + (isTIR ? -18 : 28));
+    }
+
+    function updateValues(){
+      incidenceVal.textContent = incidenceSlider.value;
+      simulate();
+    }
+
+    function updateResultsTable(){
+      const tbody = document.querySelector("#resultsTable tbody");
+      tbody.innerHTML = "";
+
+      results.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r.i}</td>
+          <td>${r.n1}</td>
+          <td>${r.n2}</td>
+          <td>${r.r === "TIR" ? "TIR" : r.r + "°"}</td>
+          <td>${r.note}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function recordResult(){
+      const iDeg = parseFloat(incidenceSlider.value);
+      const iRad = rad(iDeg);
+      const n1 = parseFloat(medium1Select.value);
+      const n2 = parseFloat(medium2Select.value);
+
+      const sinr = (n1 / n2) * Math.sin(iRad);
+      let note = "";
+      let rOut = "TIR";
+
+      if (Math.abs(sinr) <= 1){
+        const rRad = Math.asin(clamp(sinr, -1, 1));
+        rOut = deg(rRad).toFixed(1);
+        note = "refraction";
+      } else {
+        note = "total internal reflection";
+      }
+
+      results.push({
+        i: iDeg.toFixed(1),
+        n1: n1.toFixed(2),
+        n2: n2.toFixed(2),
+        r: rOut,
+        note
+      });
+
+      updateResultsTable();
+    }
+
+    function saveResultsToFile(){
+      const data = JSON.stringify(results, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'snell_results.json';
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    function clearResults(){
+      results = [];
+      updateResultsTable();
+    }
+
+    // ✅ EmailJS send (same params as your working pages)
+    async function sendResultsEmail(){
+      const userEmail = window.__currentUserEmail;
+
+      if (!userEmail) {
+        alert("You are not logged in (or email not confirmed). Please login on the main page first.");
+        return;
+      }
+      if (!results.length) {
+        alert("No results yet. Record at least one result first.");
+        return;
+      }
+
+      try{
+        sendBtn.disabled = true;
+        setEmailStatus("ok", "📩 Sending email...");
+
+        await waitForEmailJS();
+
+        const params = {
+          email: userEmail,
+          name: userEmail,
+          results: JSON.stringify(results, null, 2)
+        };
+
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params);
+
+        setEmailStatus("ok", `✅ Sent successfully to <b>${userEmail}</b>.`);
+      }catch(err){
+        console.error("❌ EmailJS error:", err);
+        const status = err?.status ?? "(no status)";
+        const text   = err?.text ?? err?.message ?? JSON.stringify(err);
+        setEmailStatus("err", `❌ Email failed. status: <b>${status}</b> — ${text}`);
+        alert("Email failed. Open console (F12) and check errors.");
+      }finally{
+        sendBtn.disabled = false;
+      }
+    }
+
+    incidenceSlider.addEventListener("input", updateValues);
+    medium1Select.addEventListener("change", updateValues);
+    medium2Select.addEventListener("change", updateValues);
+
+    recordBtn.addEventListener("click", recordResult);
+    saveBtn.addEventListener("click", saveResultsToFile);
+    clearBtn.addEventListener("click", clearResults);
+    sendBtn.addEventListener("click", sendResultsEmail);
+
+    updateValues();
+  </script>
+</body>
+</html>
