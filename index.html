@@ -8,120 +8,249 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
+<!-- ✅ EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
 <style>
-body {
-  margin: 0;
-  font-family: 'Poppins', sans-serif;
-  background: linear-gradient(135deg, #141E30, #243B55);
-  color: white;
-  text-align: center;
-}
+  body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #141E30, #243B55);
+    color: white;
+    text-align: center;
+  }
 
-h1 {
-  margin-top: 40px;
-  font-size: 42px;
-}
+  h1 { margin-top: 40px; font-size: 42px; }
+  .subtitle { opacity: 0.8; margin-bottom: 20px; }
 
-.subtitle {
-  opacity: 0.8;
-  margin-bottom: 20px;
-}
+  .login-box {
+    background: white;
+    color: black;
+    width: 360px;
+    padding: 30px;
+    margin: 30px auto;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  }
 
-.login-box {
-  background: white;
-  color: black;
-  width: 360px;
-  padding: 30px;
-  margin: 30px auto;
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-}
+  .input-group { position: relative; margin: 10px 0; }
+  .input-group i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+  }
+  .input-group input {
+    width: 85%;
+    padding: 12px 12px 12px 40px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    display: block;
+    margin: 0 auto;
+  }
 
-.input-group {
-  position: relative;
-  margin: 10px 0;
-}
+  button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    background: #243B55;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  button i { margin-right: 6px; }
+  button:hover { background: #141E30; }
 
-.input-group i {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #666;
-}
+  .feedback {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    display: none;
+    font-size: 14px;
+  }
+  .success { background: #d4edda; color: #155724; }
+  .error { background: #f8d7da; color: #721c24; }
 
-.input-group input {
-  width: 85%;
-  padding: 12px 12px 12px 40px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-  display: block;
-  margin: 0 auto;
-}
+  .cards {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 50px;
+    flex-wrap: wrap;
+  }
 
-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border: none;
-  border-radius: 10px;
-  background: #243B55;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.3s;
-}
+  .card {
+    background: white;
+    color: black;
+    width: 220px;
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  .card:hover { transform: translateY(-10px); }
+  .icon { font-size: 50px; }
 
-button i { margin-right: 6px; }
-button:hover { background: #141E30; }
+  .logout { background: crimson; margin-top: 30px; }
 
-.feedback {
-  margin-top: 10px;
-  padding: 10px;
-  border-radius: 8px;
-  display: none;
-  font-size: 14px;
-}
+  .guide {
+    margin-top: 20px;
+    padding: 30px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 15px;
+  }
 
-.success { background: #d4edda; color: #155724; }
-.error { background: #f8d7da; color: #721c24; }
+  #verifySection { margin-top: 10px; }
+  .small-note { font-size: 14px; opacity: 0.85; margin: 10px 0; }
 
-.cards {
-  display: flex;
-  justify-content: center;
-  gap: 30px;
-  margin-top: 50px;
-  flex-wrap: wrap;
-}
+  /* =========================
+     ✅ Feedback modal
+     ========================= */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: none;                 /* hidden by default */
+    align-items: center;           /* ✅ center vertically */
+    justify-content: center;       /* ✅ center horizontally */
+    padding: 18px;
+    z-index: 9999;
+  }
 
-.card {
-  background: white;
-  color: black;
-  width: 220px;
-  padding: 20px;
-  border-radius: 20px;
-  box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-  cursor: pointer;
-  transition: 0.3s;
-}
+  .modal {
+    width: min(720px, 96vw);
+    background: #fff;
+    color: #111;
+    border-radius: 20px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.45);
+    overflow: hidden;
+    text-align: left;
+  }
 
-.card:hover { transform: translateY(-10px); }
-.icon { font-size: 50px; }
+  .modalHeader{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    padding: 18px 18px 12px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+  .modalHeader h3{
+    margin:0;
+    font-size: 20px;
+    font-weight: 800;
+  }
 
-.logout {
-  background: crimson;
-  margin-top: 30px;
-}
+  /* ✅ Perfectly centered X using SVG (no font baseline issues) */
+  .closeBtn{
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: rgba(0,0,0,0.07);
+    border-radius: 12px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    padding: 0;
+  }
+  .closeBtn:hover{ background: rgba(0,0,0,0.12); }
+  .closeBtn svg{
+    width: 18px;
+    height: 18px;
+    display: block; /* ✅ important */
+  }
 
-.guide {
-  margin-top: 20px;
-  padding: 30px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 15px;
-}
+  .modalBody{
+    padding: 16px 18px 18px;
+  }
 
-#verifySection { margin-top: 10px; }
-.small-note { font-size: 14px; opacity: 0.85; margin: 10px 0; }
+  .formRow{ margin: 12px 0; }
+  .formRow label{
+    display:block;
+    font-size: 13px;
+    font-weight: 800;
+    color: rgba(0,0,0,0.75);
+    margin-bottom: 6px;
+  }
+  .formRow input, .formRow textarea{
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.18);
+    font-family: 'Poppins', sans-serif;
+    outline: none;
+    font-size: 14px;
+    background: rgba(0,0,0,0.02);
+  }
+  .formRow textarea{ min-height: 140px; resize: vertical; }
+
+  .modalActions{
+    display:flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-top: 12px;
+  }
+
+  .btnPrimary{
+    width: auto;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: #243B55;
+    color: #fff;
+    font-weight: 800;
+  }
+  .btnPrimary:hover{ background:#141E30; }
+  .btnGhost{
+    width: auto;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: rgba(0,0,0,0.07);
+    color: #111;
+    font-weight: 800;
+  }
+  .btnGhost:hover{ background: rgba(0,0,0,0.12); }
+
+  .emailStatus{
+    display:none;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    border: 1px solid rgba(0,0,0,0.15);
+    background: rgba(0,0,0,0.03);
+  }
+  .emailStatus.ok{
+    display:block;
+    border-color: rgba(46, 204, 113, 0.35);
+    background: rgba(46, 204, 113, 0.12);
+  }
+  .emailStatus.err{
+    display:block;
+    border-color: rgba(231, 76, 60, 0.35);
+    background: rgba(231, 76, 60, 0.12);
+  }
+
+  /* ✅ small toast */
+  .toast{
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.80);
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-weight: 800;
+    display:none;
+    z-index: 10000;
+    box-shadow: 0 14px 30px rgba(0,0,0,0.35);
+  }
 </style>
 </head>
 
@@ -152,7 +281,6 @@ button:hover { background: #141E30; }
   <button onclick="login()"><i class="fa fa-sign-in-alt"></i> Login</button>
   <button onclick="guestLogin()"><i class="fa fa-user"></i> Continue as Guest</button>
 
-  <!-- ✅ Email verification info (Firebase email verification via link) -->
   <div id="verifySection" style="display:none;">
     <p class="small-note">
       Please confirm your email using the link we sent to your mailbox (check Spam too). After confirming, press <b>Login</b>.
@@ -186,7 +314,7 @@ button:hover { background: #141E30; }
     </div>
   </div>
 
-  <button onclick="sendFeedback()"><i class="fa fa-envelope"></i> Send Feedback</button>
+  <button onclick="openFeedbackModal()"><i class="fa fa-envelope"></i> Send Feedback</button>
   <button class="logout" onclick="logout()"><i class="fa fa-sign-out-alt"></i> Logout</button>
 </div>
 
@@ -204,7 +332,48 @@ button:hover { background: #141E30; }
   <p>6. Logout when finished.</p>
 </div>
 
-<!-- ✅ Firebase (CDN, no downloads needed) -->
+<!-- ✅ Feedback Modal -->
+<div class="overlay" id="feedbackOverlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Send Feedback">
+    <div class="modalHeader">
+      <h3>Send Feedback</h3>
+      <button class="closeBtn" onclick="closeFeedbackModal()" aria-label="Close">
+        <!-- ✅ centered SVG -->
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12" stroke="rgba(0,0,0,0.85)" stroke-width="2.6" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modalBody">
+      <div class="formRow">
+        <label>From (auto)</label>
+        <input id="fbFrom" type="text" readonly />
+      </div>
+
+      <div class="formRow">
+        <label>Subject</label>
+        <input id="fbSubject" type="text" placeholder="Short subject..." maxlength="80" />
+      </div>
+
+      <div class="formRow">
+        <label>Message</label>
+        <textarea id="fbMessage" placeholder="Write your feedback here..." maxlength="2000"></textarea>
+      </div>
+
+      <div id="fbStatus" class="emailStatus"></div>
+
+      <div class="modalActions">
+        <button class="btnGhost" onclick="closeFeedbackModal()">Cancel</button>
+        <button class="btnPrimary" id="fbSendBtn" onclick="sendFeedbackEmail()">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✅ Sent</div>
+
+<!-- ✅ Firebase (CDN) -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
   import {
@@ -223,7 +392,6 @@ button:hover { background: #141E30; }
     serverTimestamp
   } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-  // ===== Firebase config (from your console) =====
   const firebaseConfig = {
     apiKey: "AIzaSyCG_MCPpYlma9bqXkzRwt_3hsyxIL2jeUI",
     authDomain: "physics-experiments-ib.firebaseapp.com",
@@ -237,7 +405,6 @@ button:hover { background: #141E30; }
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // strict domain check (prevents @shirakatsy.am.fake etc.)
   const schoolEmailPattern = /^[a-zA-Z0-9._%+-]+@shirakatsy\.am$/;
 
   function showFeedback(message, type) {
@@ -269,32 +436,36 @@ button:hover { background: #141E30; }
     document.getElementById("verifySection").style.display = show ? "block" : "none";
   }
 
-  // IMPORTANT FIX:
-  // - do NOT let unverified users into mainContent
-  // - if user verified in another tab, reload user to refresh emailVerified
+  // expose for feedback modal
+  window.__currentUserEmail = null;
+  window.__currentUserName  = null;
+
   onAuthStateChanged(auth, async (user) => {
     const guest = localStorage.getItem("guest") === "1";
 
-    // Guest mode
     if (!user && guest) {
+      window.__currentUserEmail = null;
+      window.__currentUserName  = "Guest";
       showVerifyBlock(false);
       clearFeedback();
       showMain("Guest");
       return;
     }
 
-    // Not logged in
     if (!user) {
+      window.__currentUserEmail = null;
+      window.__currentUserName  = null;
       showVerifyBlock(false);
       clearFeedback();
       showLogin();
       return;
     }
 
-    // Logged in but not verified -> keep on login screen
     if (!user.emailVerified) {
-      await user.reload(); // refresh verification state
+      await user.reload();
       if (!user.emailVerified) {
+        window.__currentUserEmail = null;
+        window.__currentUserName  = null;
         showLogin();
         showVerifyBlock(true);
         showFeedback(
@@ -305,14 +476,16 @@ button:hover { background: #141E30; }
       }
     }
 
-    // Verified -> allow access
     localStorage.removeItem("guest");
     showVerifyBlock(false);
     clearFeedback();
-    showMain(user.displayName || user.email || "User");
+
+    window.__currentUserEmail = user.email || null;
+    window.__currentUserName  = user.displayName || user.email || "User";
+
+    showMain(window.__currentUserName);
   });
 
-  // ====== REGISTER ======
   window.register = async function () {
     clearFeedback();
 
@@ -326,24 +499,18 @@ button:hover { background: #141E30; }
 
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-      // set display name in Auth profile
       await updateProfile(cred.user, { displayName: name });
 
-      // save user profile in Firestore ("database")
       await setDoc(doc(db, "users", cred.user.uid), {
         name,
         email,
         createdAt: serverTimestamp()
       });
 
-      // send verification email (link)
       await sendEmailVerification(cred.user);
 
       showVerifyBlock(true);
       showFeedback("Registered! Please confirm your email (check Spam too), then press Login.", "success");
-
-      // Sign out until verified (so they can't get auto-logged-in on refresh)
       await signOut(auth);
     } catch (e) {
       console.error(e);
@@ -351,7 +518,6 @@ button:hover { background: #141E30; }
     }
   };
 
-  // ====== LOGIN ======
   window.login = async function () {
     clearFeedback();
 
@@ -362,11 +528,8 @@ button:hover { background: #141E30; }
 
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
-
-      // refresh verification state (important)
       await cred.user.reload();
 
-      // Require confirmation
       if (!cred.user.emailVerified) {
         showVerifyBlock(true);
         showFeedback("Please confirm your email first (check Inbox/Spam).", "error");
@@ -382,7 +545,6 @@ button:hover { background: #141E30; }
     }
   };
 
-  // ====== RESEND CONFIRMATION EMAIL ======
   window.resendVerification = async function () {
     clearFeedback();
 
@@ -393,10 +555,8 @@ button:hover { background: #141E30; }
 
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
-
       await sendEmailVerification(cred.user);
       showFeedback("Confirmation email resent. Check Inbox/Spam.", "success");
-
       await signOut(auth);
     } catch (e) {
       console.error(e);
@@ -404,7 +564,6 @@ button:hover { background: #141E30; }
     }
   };
 
-  // ====== GUEST ======
   window.guestLogin = function () {
     localStorage.setItem("guest", "1");
     showVerifyBlock(false);
@@ -412,7 +571,6 @@ button:hover { background: #141E30; }
     showMain("Guest");
   };
 
-  // ====== LOGOUT ======
   window.logout = async function () {
     localStorage.removeItem("guest");
     try { await signOut(auth); } catch {}
@@ -423,10 +581,156 @@ button:hover { background: #141E30; }
     const guide = document.getElementById("guideSection");
     guide.style.display = guide.style.display === "none" ? "block" : "none";
   };
+</script>
 
-  window.sendFeedback = function () {
-    window.location.href = "mailto:KhachaturyanVache@shirakatsy.am?subject=Physics Lab Feedback";
-  };
+<script>
+  /* =========================
+     ✅ EmailJS CONFIG
+     ========================= */
+  const EMAILJS_PUBLIC_KEY  = "OF8tw55BMFQQIG8OM";
+  const EMAILJS_SERVICE_ID  = "service_xiyprvp";
+
+  // ⚠️ ВАЖНО:
+  // Для feedback лучше сделать отдельный template в EmailJS (как на твоём скрине "Contact Us").
+  // Вставь сюда ID этого шаблона:
+  const EMAILJS_FEEDBACK_TEMPLATE_ID = "template_1eo4dtg"; // <-- замени на твой реальный template_id
+
+  // куда отправлять feedback (твой inbox)
+  const FEEDBACK_TO_EMAIL = "physicsexperements@gmail.com";
+
+  function toast(msg){
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.style.display = "block";
+    clearTimeout(window.__toastTimer);
+    window.__toastTimer = setTimeout(()=>{ t.style.display="none"; }, 1800);
+  }
+
+  function setFbStatus(type, msg){
+    const box = document.getElementById("fbStatus");
+    box.className = "emailStatus " + (type === "ok" ? "ok" : "err");
+    box.style.display = "block";
+    box.innerHTML = msg;
+  }
+
+  function waitForEmailJS(timeoutMs = 8000){
+    return new Promise((resolve, reject) => {
+      const start = Date.now();
+      (function check(){
+        if (window.emailjs && typeof window.emailjs.send === "function") return resolve();
+        if (Date.now() - start > timeoutMs) return reject(new Error("EmailJS not loaded (timeout)"));
+        setTimeout(check, 50);
+      })();
+    });
+  }
+
+  (async function initEmailJS(){
+    try{
+      await waitForEmailJS();
+      emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+      console.log("✅ EmailJS initialized");
+    }catch(e){
+      console.error("❌ EmailJS init failed:", e);
+    }
+  })();
+
+  /* =========================
+     ✅ Modal open/close
+     ========================= */
+  function openFeedbackModal(){
+    const overlay = document.getElementById("feedbackOverlay");
+    overlay.style.display = "flex";
+    overlay.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+
+    const userEmail = window.__currentUserEmail;
+    const userName  = window.__currentUserName || userEmail || "Guest";
+    document.getElementById("fbFrom").value = userEmail ? `${userName} <${userEmail}>` : "Guest (login required)";
+
+    const st = document.getElementById("fbStatus");
+    st.className = "emailStatus";
+    st.style.display = "none";
+
+    document.getElementById("fbSubject").focus();
+  }
+
+  function closeFeedbackModal(){
+    const overlay = document.getElementById("feedbackOverlay");
+    overlay.style.display = "none";
+    overlay.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+
+  // close on ESC + click outside
+  window.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape"){
+      const overlay = document.getElementById("feedbackOverlay");
+      if(overlay.style.display === "flex") closeFeedbackModal();
+    }
+  });
+
+  document.getElementById("feedbackOverlay").addEventListener("mousedown", (e)=>{
+    if(e.target.id === "feedbackOverlay") closeFeedbackModal();
+  });
+
+  /* =========================
+     ✅ Send Feedback via EmailJS
+     ========================= */
+  async function sendFeedbackEmail(){
+    const userEmail = window.__currentUserEmail;
+    const userName  = window.__currentUserName || userEmail || "User";
+
+    if(!userEmail){
+      alert("Login + verify email first to send feedback.");
+      return;
+    }
+
+    const subject = (document.getElementById("fbSubject").value || "").trim();
+    const message = (document.getElementById("fbMessage").value || "").trim();
+
+    if(!subject || !message){
+      setFbStatus("err", "❌ Please fill subject and message.");
+      return;
+    }
+
+    const btn = document.getElementById("fbSendBtn");
+    btn.disabled = true;
+
+    try{
+      setFbStatus("ok", "Sending...");
+
+      await waitForEmailJS();
+
+      // payload keys должны совпасть с твоим EmailJS template variables
+      const params = {
+        to_email: FEEDBACK_TO_EMAIL,     // можно оставить, даже если To Email fixed в шаблоне
+        email: userEmail,               // для Reply-To в шаблоне
+        name: userName,                 // from name
+        title: subject,                 // если в шаблоне Subject: "Contact Us: {{title}}"
+        message: message,
+        time: new Date().toLocaleString()
+      };
+
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FEEDBACK_TEMPLATE_ID, params);
+
+      setFbStatus("ok", `✅ Sent successfully!`);
+      toast("✅ Feedback sent");
+
+      // clear fields
+      document.getElementById("fbSubject").value = "";
+      document.getElementById("fbMessage").value = "";
+
+      setTimeout(closeFeedbackModal, 900);
+    }catch(err){
+      console.error("❌ EmailJS error:", err);
+      const status = err?.status ?? "(no status)";
+      const text   = err?.text ?? err?.message ?? JSON.stringify(err);
+      setFbStatus("err", `❌ Failed. status: <b>${status}</b> — ${text}`);
+      alert("Email failed. Open console (F12) for details.");
+    }finally{
+      btn.disabled = false;
+    }
+  }
 </script>
 
 </body>
