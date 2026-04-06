@@ -20,7 +20,7 @@ body {
 
 h1 { margin-top: 20px; font-size: 38px; }
 
-/* Формулы */
+/* Formulas */
 #equationDisplay {
   margin: 20px auto;
   width: 700px;
@@ -56,7 +56,6 @@ h1 { margin-top: 20px; font-size: 38px; }
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
-/* Arrow */
 .arrow {
   position: absolute;
   left: 50%;
@@ -220,10 +219,9 @@ h_{max} = h_0 + \frac{v_0^2}{2 g}
 <a href="index.html" class="back-button">Back to Main Page</a>
 </div>
 
-<!-- ✅ EmailJS (sends email FROM your connected Gmail in EmailJS) -->
+<!-- EmailJS -->
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script>
-  // Your EmailJS keys
   const EMAILJS_PUBLIC_KEY = "OF8tw55BMFQQIG8OM";
   const EMAILJS_SERVICE_ID = "service_xiyprvp";
   const EMAILJS_TEMPLATE_ID = "template_rk45mwm";
@@ -231,7 +229,7 @@ h_{max} = h_0 + \frac{v_0^2}{2 g}
   emailjs.init(EMAILJS_PUBLIC_KEY);
 </script>
 
-<!-- ✅ Firebase for this page (read the logged-in student's email) -->
+<!-- Firebase -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
@@ -258,7 +256,9 @@ h_{max} = h_0 + \frac{v_0^2}{2 g}
       return;
     }
 
-    try { await user.reload(); } catch {}
+    try { 
+      await user.reload(); 
+    } catch {}
 
     if (!user.emailVerified) {
       window.__currentUserEmail = null;
@@ -267,7 +267,7 @@ h_{max} = h_0 + \frac{v_0^2}{2 g}
     }
 
     window.__currentUserEmail = user.email || null;
-    authNotice.innerHTML = `Logged in as: <b>${window.__currentUserEmail}</b>`;
+    authNotice.innerHTML = 'Status: <b>Logged in</b>';
   });
 </script>
 
@@ -286,25 +286,34 @@ let results = [];
 
 function startSimulation() {
   clearInterval(interval);
+
   initialHeight = parseFloat(document.getElementById('initialHeight').value);
   initialVelocity = parseFloat(document.getElementById('initialVelocity').value);
 
+  if (isNaN(initialHeight) || isNaN(initialVelocity)) {
+    alert("Please enter valid values.");
+    return;
+  }
+
   time = 0;
   let y = initialHeight;
-  ball.style.bottom = `${y*scaleY}px`;
+  ball.style.bottom = `${y * scaleY}px`;
+
+  velocityText.textContent = initialVelocity.toFixed(2);
+  timeText.textContent = "0.00";
 
   interval = setInterval(() => {
     time += 0.01;
-    let v = initialVelocity - g*time;
-    y = initialHeight + initialVelocity*time - 0.5*g*time*time;
+    let v = initialVelocity - g * time;
+    y = initialHeight + initialVelocity * time - 0.5 * g * time * time;
 
     if (y <= 0) {
       y = 0;
       clearInterval(interval);
 
       results.push({
-        initialHeight,
-        initialVelocity,
+        initialHeight: initialHeight,
+        initialVelocity: initialVelocity,
         finalVelocity: v.toFixed(2),
         time: time.toFixed(2)
       });
@@ -312,7 +321,7 @@ function startSimulation() {
       updateResultsTable();
     }
 
-    ball.style.bottom = `${y*scaleY}px`;
+    ball.style.bottom = `${y * scaleY}px`;
 
     const ballCenter = y * scaleY + 17.5;
     const arrowLength = Math.min(Math.abs(v) * 4, 150);
@@ -341,19 +350,23 @@ function startSimulation() {
 function updateResultsTable() {
   const tableBody = document.querySelector("#resultsTable tbody");
   tableBody.innerHTML = "";
+
   results.forEach(result => {
-    tableBody.innerHTML += `<tr>
-      <td>${result.initialHeight}</td>
-      <td>${result.initialVelocity}</td>
-      <td>${result.finalVelocity}</td>
-      <td>${result.time}</td>
-    </tr>`;
+    const row = `
+      <tr>
+        <td>${result.initialHeight}</td>
+        <td>${result.initialVelocity}</td>
+        <td>${result.finalVelocity}</td>
+        <td>${result.time}</td>
+      </tr>
+    `;
+    tableBody.innerHTML += row;
   });
 }
 
 function saveResultsToFile() {
-  let raw = JSON.stringify(results, null, 2);
-  let file = new Blob([raw], { type: 'text/plain' });
+  const raw = JSON.stringify(results, null, 2);
+  const file = new Blob([raw], { type: 'text/plain' });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(file);
   link.download = "FreeFallResults.txt";
@@ -361,12 +374,11 @@ function saveResultsToFile() {
   URL.revokeObjectURL(link.href);
 }
 
-// ✅ SEND EMAIL: FROM your connected EmailJS Gmail -> TO the logged-in student's email
 function sendResultsEmail() {
   const studentEmail = window.__currentUserEmail;
 
   if (!studentEmail) {
-    alert("You are not logged in (or email not confirmed). Please login on the main page first.");
+    alert("You are not logged in or your email is not confirmed.");
     return;
   }
 
@@ -376,16 +388,17 @@ function sendResultsEmail() {
   }
 
   const params = {
-    email: studentEmail,                         // To Email in template: {{email}}
-    name: studentEmail,                          // Student: {{name}}
-    results: JSON.stringify(results, null, 2)     // Results: {{results}}
+    to_email: studentEmail,
+    results: JSON.stringify(results, null, 2)
   };
 
   emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params)
-    .then(() => alert("✅ Results sent to your email!"))
+    .then(() => {
+      alert("✅ Results sent successfully.");
+    })
     .catch((err) => {
       console.error(err);
-      alert("❌ Failed to send email. Open console for details.");
+      alert("❌ Failed to send email. Check console.");
     });
 }
 </script>
